@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.env
+.flaskenv
+
+# Flask instance folder
+instance/
+*.db
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Docker
+*.log
+docker-compose.override.yml
+docker-compose.local.yml
+docker-compose.dev.yml
+docker-compose.prod.yml
+docker-compose.*.yml
+Dockerfile.*
+
+# Test & coverage
+.coverage
+coverage/
+htmlcov/
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+test-results/
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Misc
+*.swp
+*.swo
+*.bak
+*.tmp
+*.orig
+*.lock
+
+# Node.js (if any frontend tooling)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docs
+docs/**/*.pdf
+docs/**/*.png
