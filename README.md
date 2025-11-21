@@ -13,11 +13,14 @@ The project is designed as a **testing playground**: unit, integration, API, E2E
 
 ---
 
-## Tech Stack
+## Domain Concepts & Project Elements
 
-- **Backend:** Python, Flask, SQLite
-- **Frontend:** HTML, CSS, vanilla JavaScript (CSR)
-- **Testing:** pytest, Postman, Playwright (browser E2E), JMeter (API performance)
+This project is focused on making a small **multi-currency wallet simulator** for:
+
+- **Managing wallets** – create wallets in different currencies and see their balances.
+- **Moving money** – make deposits, withdrawals and currency exchanges between wallets.
+- **Seeing history** – view a simple log of what happened to a wallet over time.
+- **Using external API** – fetches live (?or stubbed in tests?) exchange rates to support currency conversions.
 
 ---
 
@@ -52,4 +55,13 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-After that, you can initialize the database and run the Flask app (details belong in a later iteration of this README as the implementation stabilizes).
+---
+
+## 👥 Author
+
+- **Marcus R. Kjærsgaard**  
+  [![GitHub](https://img.shields.io/badge/GitHub-marcus--rk-black?logo=github)](https://github.com/marcus-rk)
+
+---
+
+... More to come
