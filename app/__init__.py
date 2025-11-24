@@ -1,14 +1,20 @@
-# app/__init__.py with create_app()
 # setup Flask application factory
 from flask import Flask
+from .config import Config
+from .database import init_db
 
-def create_app(config_class=None): # None for now, should be Config
-    app = Flask(__name__)
-    if config_class:
-        app.config.from_object(config_class)
-    
-    # Configure the app (database, blueprints, etc.)
-    # init_db(app)
-    # register_blueprints(app)
+def create_app(test_config: dict | None = None):
+    app = Flask(__name__, instance_relative_config=True)
+    app.config.from_object(Config)
+
+    if test_config:
+        app.config.update(test_config)
+
+    # DB teardown hook
+    init_db(app)
+
+    # Register blueprints
+    from .routes.health import health_bp
+    app.register_blueprint(health_bp)
 
     return app
