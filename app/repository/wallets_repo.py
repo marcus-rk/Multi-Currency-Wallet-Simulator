@@ -1,4 +1,4 @@
-import sqlite3
+from ..database import get_db
 from typing import Optional
 from datetime import datetime
 from decimal import Decimal
@@ -17,7 +17,8 @@ def row_to_wallet(row) -> Wallet:
     )
 
 
-def get_wallet(db, wallet_id: str) -> Optional[Wallet]:
+def get_wallet(wallet_id: str) -> Optional[Wallet]:
+    db = get_db()
     cur = db.execute(
         "SELECT id, currency, balance, status, created_at, updated_at "
         "FROM wallets WHERE id = ?",
@@ -27,7 +28,8 @@ def get_wallet(db, wallet_id: str) -> Optional[Wallet]:
     return row_to_wallet(row) if row else None
 
 
-def save_wallet(db, wallet: Wallet) -> None:
+def save_wallet(wallet: Wallet) -> None:
+    db = get_db()
     db.execute(
         """
         UPDATE wallets

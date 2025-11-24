@@ -1,4 +1,4 @@
-import sqlite3
+from ..database import get_db
 from typing import Optional
 from datetime import datetime
 from decimal import Decimal
@@ -6,7 +6,8 @@ from decimal import Decimal
 from app.domain.models.Transaction import Transaction
 
 
-def insert_transaction(db, transaction: Transaction) -> None:
+def insert_transaction(transaction: Transaction) -> None:
+    db = get_db()
     db.execute(
         """
         INSERT INTO transactions (
@@ -31,7 +32,8 @@ def insert_transaction(db, transaction: Transaction) -> None:
     db.commit()
 
 
-def get_transaction(db, transaction_id: str) -> Optional[Transaction]:
+def get_transaction(transaction_id: str) -> Optional[Transaction]:
+    db = get_db()
     cur = db.execute(
         "SELECT id, type, source_wallet_id, target_wallet_id, "
         "amount, credited_amount, currency, status, error_code, created_at "

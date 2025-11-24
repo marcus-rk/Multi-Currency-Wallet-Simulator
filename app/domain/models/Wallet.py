@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from .Literals import Currency, WalletStatus
+from .enums import Currency, WalletStatus
 
 @dataclass
 class Wallet:

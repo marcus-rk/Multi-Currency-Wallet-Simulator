@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
-from .Literals import TransactionType, TransactionStatus, Currency
+from .enums import TransactionType, TransactionStatus, Currency
 
 @dataclass
 class Transaction:
