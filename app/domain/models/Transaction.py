@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import Optional
 from .enums import TransactionType, TransactionStatus, Currency
 
+
 @dataclass
 class Transaction:
     id: str
@@ -11,8 +12,7 @@ class Transaction:
     source_wallet_id: Optional[str]
     target_wallet_id: Optional[str]
     amount: Decimal
-    credited_amount: Optional[Decimal]
     currency: Currency
     status: TransactionStatus
     error_code: Optional[str]
-    timestamp: datetime
+    created_at: datetime

@@ -1,5 +1,6 @@
 from typing import Literal
 
+
 # Transaction types and statuses
 TransactionType = Literal["DEPOSIT", "WITHDRAWAL", "EXCHANGE"]
 TransactionStatus = Literal["COMPLETED", "FAILED"]
