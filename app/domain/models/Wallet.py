@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from .enums import Currency, WalletStatus
+from .literals import Currency, WalletStatus
 
 
 @dataclass
@@ -13,5 +13,5 @@ class Wallet:
     created_at: datetime
     updated_at: datetime
 
-def is_active(self) -> bool:
-    return self.status == WalletStatus.ACTIVE
+    def is_active(self) -> bool:
+        return self.status == "ACTIVE"

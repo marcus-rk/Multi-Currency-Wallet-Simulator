@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from app.domain.rules.apply_deposit import apply_deposit
+from app.domain.rules.deposit import apply_deposit
 from app.repository.wallets_repo import wallets_repo
 from app.repository.transactions_repo import transactions_repo
 

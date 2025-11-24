@@ -5,6 +5,13 @@ from typing import Literal
 TransactionType = Literal["DEPOSIT", "WITHDRAWAL", "EXCHANGE"]
 TransactionStatus = Literal["COMPLETED", "FAILED"]
 
+# Transaction error codes
+TransactionErrorCode = Literal[
+    "INVALID_WALLET_STATE",
+    "INVALID_AMOUNT",
+    "UNSUPPORTED_CURRENCY",
+]
+
 # Wallet statuses and supported currencies
 WalletStatus = Literal["ACTIVE", "FROZEN", "CLOSED"]
 Currency = Literal["DKK", "EUR", "USD"]
