@@ -12,37 +12,69 @@ from ..enums import (
 
 @dataclass
 class Transaction:
-    '''
-    Transaction domain model representing a financial transaction.
-    - **id**: str, identifier of the transaction
-    - **type**: TransactionType, type of the transaction (DEPOSIT, WITHDRAWAL, EXCHANGE)
-    - **source_wallet_id**: Optional[str], ID of the source wallet (if applicable)
-    - **target_wallet_id**: Optional[str], ID of the target wallet (if applicable)
-    - **amount**: Decimal, amount involved in the transaction
-    - **currency**: Currency, currency of the transaction amount
-    - **credited_amount**: Optional[Decimal], amount credited to target wallet in exchange transactions
-    - **credited_currency**: Optional[Currency], currency of the credited amount in exchange transactions
-    - **source_balance_after**: Optional[Decimal], balance of source wallet after transaction
-    - **target_balance_after**: Optional[Decimal], balance of target wallet after transaction
-    - **status**: TransactionStatus, status of the transaction (COMPLETED, FAILED)
-    - **error_code**: Optional[TransactionErrorCode], error code if the transaction failed
-    - **created_at**: datetime, timestamp when the transaction was created
-    '''
+    """
+    Domain model representing a single financial transaction.
+
+    Attributes:
+        id:
+            Unique identifier of the transaction.
+        type:
+            Type of transaction (DEPOSIT, WITHDRAWAL, EXCHANGE).
+        source_wallet_id:
+            ID of the wallet money is taken from (None for deposits).
+        target_wallet_id:
+            ID of the wallet money is sent to (None for withdrawals).
+        amount:
+            Input amount of the operation, in `currency`.
+            For exchanges, this is the debited amount in the source wallet currency.
+        currency:
+            Currency of `amount` (source currency for exchanges).
+        status:
+            Outcome of the transaction (COMPLETED or FAILED).
+        error_code:
+            Error code explaining why the transaction failed, if any.
+        created_at:
+            Timestamp when the transaction was created.
+
+        credited_amount:
+            For exchanges: amount credited to the target wallet (after FX + rounding),
+            in `credited_currency`. None for deposits and withdrawals, or failed exchanges.
+        credited_currency:
+            Currency of `credited_amount` (target wallet currency for exchanges).
+        source_balance_after:
+            Balance of the source wallet immediately after the transaction is applied.
+            None if the transaction failed or there is no source wallet (deposit).
+        target_balance_after:
+            Balance of the target wallet immediately after the transaction is applied.
+            None if the transaction failed or there is no target wallet (withdrawal).
+    """
     id: str
     type: TransactionType
     source_wallet_id: Optional[str]
     target_wallet_id: Optional[str]
     amount: Decimal
     currency: Currency
-    credited_amount: Optional[Decimal] = None       # Amount credited to target wallet in exchange transactions
-    credited_currency: Optional[Currency] = None    # Currency of the credited amount in exchange transactions
-    source_balance_after: Optional[Decimal] = None  # Balance of source wallet after transaction
-    target_balance_after: Optional[Decimal] = None
     status: TransactionStatus
     error_code: Optional[TransactionErrorCode]
     created_at: datetime
+    credited_amount: Optional[Decimal] = None       
+    credited_currency: Optional[Currency] = None    
+    source_balance_after: Optional[Decimal] = None  
+    target_balance_after: Optional[Decimal] = None
 
-    # Factory method for creating a deposit transaction
+    # ------------------------------------------------------------------
+    # Static factory methods
+    #
+    # - Marked with @staticmethod → do not utilize `self` because they
+    #   create new Transaction instances.
+    # - Domain rule functions call these after:
+    #       * validating inputs, and
+    #       * computing resulting balances and status.
+    # - These factories just build consistent Transaction objects from
+    #   that data, so creation logic is in one place and the rules stay
+    #   focused on business logic instead of wiring fields.
+    # ------------------------------------------------------------------
+
     @staticmethod
     def deposit(
         transaction_id: str,

@@ -32,7 +32,7 @@ def create_transaction(transaction: Transaction) -> None:
             error_code,
             created_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             transaction.id,
@@ -83,7 +83,7 @@ def get_transaction(transaction_id: str) -> Optional[Transaction]:
 
 def get_transactions_for_wallet(wallet_id: str) -> List[Transaction]:
     """
-    List all transactions where the wallet is either source or target,
+    Returns all transactions where the wallet is either source or target,
     ordered by creation time.
     """
     db = get_db()
@@ -106,7 +106,7 @@ def get_transactions_for_wallet(wallet_id: str) -> List[Transaction]:
         FROM transactions
         WHERE source_wallet_id = ?
            OR target_wallet_id = ?
-        ORDER BY created_at ASC
+        ORDER BY created_at DESC
         """,
         (wallet_id, wallet_id),
     )
