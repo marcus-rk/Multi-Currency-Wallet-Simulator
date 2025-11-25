@@ -7,6 +7,25 @@ from app.domain.models.Wallet import Wallet
 from app.domain.enums import Currency, WalletStatus
 
 
+def create_wallet(wallet: Wallet) -> None:
+    db = get_db()
+    db.execute(
+        """
+        INSERT INTO wallets (id, currency, balance, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            wallet.id,
+            wallet.currency.value,
+            str(wallet.balance),
+            wallet.status.value,
+            wallet.created_at.isoformat(),
+            wallet.updated_at.isoformat(),
+        ),
+    )
+    db.commit()
+
+
 def get_wallet(wallet_id: str) -> Optional[Wallet]:
     """Fetch a single wallet by id, or None if it does not exist."""
     db = get_db()

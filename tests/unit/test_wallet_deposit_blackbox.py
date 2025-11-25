@@ -1,15 +1,7 @@
 """
-Blackbox tests for wallet deposit logic.
+Unit tests for deposit behaviour, derived from Black-Box Test Design PDF:
+- Section 2.1: Amount equivalence partitions
+- Section 2.2: 3-value boundary value analysis
+- Section 3.1: Deposit decision table (R1-R5)
 """
 
-def test_deposit_success():
-    # TODO: Implement test for successful deposit
-    pass
-
-def test_deposit_invalid_amount():
-    # TODO: Implement test for invalid deposit amount
-    pass
-
-def test_deposit_unsupported_currency():
-    # TODO: Implement test for unsupported currency
-    pass

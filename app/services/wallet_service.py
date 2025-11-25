@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Tuple
 from uuid import uuid4
 
-from app.domain.enums import Currency
+from app.domain.enums import Currency, WalletStatus
 from app.domain.models.Wallet import Wallet
 from app.domain.models.Transaction import Transaction
 from app.domain.rules import (
@@ -11,9 +11,28 @@ from app.domain.rules import (
     apply_withdraw,
     apply_exchange,
 )
-from app.repository.wallets_repo import get_wallet, update_wallet
+from app.repository.wallets_repo import (
+    get_wallet, 
+    update_wallet, 
+    create_wallet
+)
 from app.repository.transactions_repo import create_transaction
 from .exchange_service import get_exchange_rate
+
+
+def create_wallet(currency: Currency, initial_balance: Decimal = Decimal("0.00")) -> Wallet:
+    now = datetime.utcnow()
+    wallet = Wallet(
+        id=str(uuid4()), # new UUID for the wallet
+        currency=currency,
+        balance=initial_balance,
+        status=WalletStatus.ACTIVE,
+        created_at=now,
+        updated_at=now,
+    )
+
+    create_wallet(wallet)
+    return wallet
 
 
 def deposit_money(
@@ -33,7 +52,7 @@ def deposit_money(
         wallet=wallet,
         amount=amount,
         currency=currency,
-        transaction_id=str(uuid4()),
+        transaction_id=str(uuid4()), # new UUID for the transaction
         now=now,
     )
 
@@ -60,7 +79,7 @@ def withdraw_money(
         wallet=wallet,
         amount=amount,
         currency=currency,
-        transaction_id=str(uuid4()),
+        transaction_id=str(uuid4()), # new UUID for the transaction
         now=now,
     )
 
@@ -100,7 +119,7 @@ def exchange_money(
         target_wallet=target_wallet,
         amount=amount,
         exchange_rate=exchange_rate,  # make sure apply_exchange uses this name
-        transaction_id=str(uuid4()),
+        transaction_id=str(uuid4()),  # new UUID for the transaction
         now=now,
     )
 
