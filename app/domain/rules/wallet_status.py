@@ -1,8 +1,9 @@
+import logging
 from datetime import datetime
+from decimal import Decimal
 
 from ..models.Wallet import Wallet
 from ..enums import WalletStatus
-
 
 def freeze_wallet(wallet: Wallet, now: datetime) -> Wallet:
     """

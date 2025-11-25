@@ -4,7 +4,12 @@ from typing import Optional, Tuple
 
 from ..models.Transaction import Transaction
 from ..models.Wallet import Wallet
-from ..models.enums import Currency, TransactionStatus, TransactionErrorCode, TransactionType
+from ..enums import (
+    Currency, 
+    TransactionStatus, 
+    TransactionErrorCode, 
+    TransactionType
+)
 
 
 def apply_deposit(
@@ -17,9 +22,8 @@ def apply_deposit(
     """
     Pure domain rule for deposits.
     - Returns (updated_wallet, transaction).
-    - If invalid, error is in transaction.error_code and wallet is unchanged.
     """
-    error_code = validate_deposit(wallet, amount, currency)
+    error_code = _validate_deposit(wallet, amount, currency)
 
     if error_code is None:
         updated_wallet = Wallet(
@@ -30,16 +34,14 @@ def apply_deposit(
             created_at=wallet.created_at,
             updated_at=now,
         )
-        status: TransactionStatus = TransactionStatus.COMPLETED
+        status = TransactionStatus.COMPLETED
     else:
         updated_wallet = wallet
         status = TransactionStatus.FAILED
 
-    transaction = Transaction(
-        id=transaction_id,
-        type=TransactionType.DEPOSIT,
-        source_wallet_id=None,
-        target_wallet_id=wallet.id,
+    transaction = Transaction.deposit(
+        transaction_id=transaction_id,
+        wallet_id=wallet.id,
         amount=amount,
         currency=currency,
         status=status,
@@ -50,7 +52,7 @@ def apply_deposit(
     return updated_wallet, transaction
 
 
-def validate_deposit(
+def _validate_deposit(
     wallet: Wallet,
     amount: Decimal,
     currency: Currency,

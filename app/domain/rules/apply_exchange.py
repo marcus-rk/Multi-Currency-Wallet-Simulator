@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 
 from ..models.Transaction import Transaction
 from ..models.Wallet import Wallet
-from ..models.enums import Currency, TransactionStatus, TransactionErrorCode, TransactionType
+from ..enums import TransactionErrorCode, TransactionStatus
 
 
 def apply_exchange(
@@ -17,13 +17,14 @@ def apply_exchange(
 ) -> Tuple[Wallet, Wallet, Transaction]:
     """
     Pure domain rule for exchanges between two wallets.
-    - Returns (updated_source_wallet, updated_target_wallet, transaction).
+    - Returns (updated_source, updated_target, transaction).
     """
-    error_code = validate_exchange(source_wallet, target_wallet, amount, fx_rate)
+    error_code = _validate_exchange(source_wallet, target_wallet, amount, fx_rate)
 
     if error_code is None:
-        # Money leaves the source wallet in its own currency
-        new_source = Wallet(
+        credited_amount = amount * fx_rate  # TODO: rounding rule applied later
+
+        updated_source = Wallet(
             id=source_wallet.id,
             currency=source_wallet.currency,
             balance=source_wallet.balance - amount,
@@ -32,9 +33,7 @@ def apply_exchange(
             updated_at=now,
         )
 
-        # Money enters the target wallet in its currency
-        credited_amount = amount * fx_rate  # rounding rules can be applied here later
-        new_target = Wallet(
+        updated_target = Wallet(
             id=target_wallet.id,
             currency=target_wallet.currency,
             balance=target_wallet.balance + credited_amount,
@@ -43,35 +42,34 @@ def apply_exchange(
             updated_at=now,
         )
 
-        status: TransactionStatus = TransactionStatus.COMPLETED
+        status = TransactionStatus.COMPLETED
     else:
-        new_source = source_wallet
-        new_target = target_wallet
+        updated_source = source_wallet
+        updated_target = target_wallet
         status = TransactionStatus.FAILED
 
-    transaction = Transaction(
-        id=transaction_id,
-        type=TransactionType.EXCHANGE,
+    transaction = Transaction.exchange(
+        transaction_id=transaction_id,
         source_wallet_id=source_wallet.id,
         target_wallet_id=target_wallet.id,
-        amount=amount,                 # in source currency
-        currency=source_wallet.currency,
+        amount=amount,
+        source_currency=source_wallet.currency,
         status=status,
         error_code=error_code,
         created_at=now,
     )
 
-    return new_source, new_target, transaction
+    return updated_source, updated_target, transaction
 
 
-def validate_exchange(
+def _validate_exchange(
     source_wallet: Wallet,
     target_wallet: Wallet,
     amount: Decimal,
     fx_rate: Optional[Decimal],
 ) -> Optional[TransactionErrorCode]:
     """
-    Returns an error code string if the exchange is invalid, otherwise None.
+    Returns an error code if the exchange is invalid, otherwise None.
     """
     if not source_wallet.is_active() or not target_wallet.is_active():
         return TransactionErrorCode.INVALID_WALLET_STATE
@@ -79,7 +77,7 @@ def validate_exchange(
     if amount <= Decimal("0"):
         return TransactionErrorCode.INVALID_AMOUNT
 
-    if source_wallet.currency == target_wallet.currency:
+    if source_wallet.currency is target_wallet.currency:
         return TransactionErrorCode.UNSUPPORTED_CURRENCY
 
     if amount > source_wallet.balance:

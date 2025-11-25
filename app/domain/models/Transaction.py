@@ -2,7 +2,12 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
-from .enums import TransactionType, TransactionStatus, Currency, TransactionErrorCode
+from ..enums import (
+    TransactionType, 
+    TransactionStatus,
+    Currency, 
+    TransactionErrorCode
+)
 
 
 @dataclass

@@ -4,7 +4,11 @@ from typing import Optional, Tuple
 
 from ..models.Transaction import Transaction
 from ..models.Wallet import Wallet
-from ..models.enums import Currency, TransactionStatus, TransactionErrorCode, TransactionType
+from ..enums import (
+    Currency, 
+    TransactionStatus, 
+    TransactionErrorCode
+)
 
 
 def apply_withdraw(
@@ -17,9 +21,8 @@ def apply_withdraw(
     """
     Pure domain rule for withdrawals.
     - Returns (updated_wallet, transaction).
-    - If invalid, error is in transaction.error_code and wallet is unchanged.
     """
-    error_code = validate_withdraw(wallet, amount, currency)
+    error_code = _validate_withdraw(wallet, amount, currency)
 
     if error_code is None:
         updated_wallet = Wallet(
@@ -30,16 +33,14 @@ def apply_withdraw(
             created_at=wallet.created_at,
             updated_at=now,
         )
-        status: TransactionStatus = TransactionStatus.COMPLETED
+        status = TransactionStatus.COMPLETED
     else:
         updated_wallet = wallet
         status = TransactionStatus.FAILED
 
-    transaction = Transaction(
-        id=transaction_id,
-        type=TransactionType.WITHDRAWAL,
-        source_wallet_id=wallet.id,
-        target_wallet_id=None,
+    transaction = Transaction.withdrawal(
+        transaction_id=transaction_id,
+        wallet_id=wallet.id,
         amount=amount,
         currency=currency,
         status=status,
@@ -50,7 +51,7 @@ def apply_withdraw(
     return updated_wallet, transaction
 
 
-def validate_withdraw(
+def _validate_withdraw(
     wallet: Wallet,
     amount: Decimal,
     currency: Currency,
