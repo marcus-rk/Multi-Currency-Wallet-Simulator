@@ -13,7 +13,7 @@ class Config:
     )
     EXCHANGE_API_URL = os.getenv(
         "EXCHANGE_API_URL",
-        "https://api.frankfurter.dev/v1",
+        "https://api.frankfurter.dev/v1", # Documentation: https://frankfurter.dev
     )
 
 

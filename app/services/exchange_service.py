@@ -7,6 +7,8 @@ import requests
 
 from app.domain.enums import Currency
 
+# Documentation URL Frankfurter API: https://frankfurter.dev
+
 EXCHANGE_API_URL: str = current_app.config["EXCHANGE_API_URL"]
 SAME_CURRENCY_RATE: Decimal = Decimal("1.0")
 
