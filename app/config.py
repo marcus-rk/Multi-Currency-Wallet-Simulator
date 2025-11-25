@@ -6,23 +6,20 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
 class Config:
-    """
-    Default configuration for the wallet application.
-    """
-    SECRET_KEY = os.environ.get("SECRET_KEY", "dev")
-    DATABASE = os.environ.get(
+    SECRET_KEY = os.getenv("SECRET_KEY", "dev")
+    DATABASE = os.getenv(
         "DATABASE",
         os.path.join(BASE_DIR, "instance", "wallet.db"),
+    )
+    EXCHANGE_API_URL = os.getenv(
+        "EXCHANGE_API_URL",
+        "https://api.frankfurter.dev/v1",
     )
 
 
 class TestConfig(Config):
-    """
-    Configuration used in tests.
-    (Can be overridden passing test_config dict to create_app.)
-    """
     TESTING = True
-    DATABASE = os.environ.get(
+    DATABASE = os.getenv(
         "TEST_DATABASE",
         os.path.join(BASE_DIR, "instance", "test_wallet.db"),
     )

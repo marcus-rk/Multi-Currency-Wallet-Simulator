@@ -1,10 +1,12 @@
 # app/__init__.py
 import os
 from flask import Flask
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from .config import Config
 from .database import init_db, init_schema
-
 
 def create_app(test_config: dict = None) -> Flask:
     """

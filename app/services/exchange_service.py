@@ -2,8 +2,13 @@
 
 from decimal import Decimal
 from typing import Optional
+from flask import current_app
+import requests
 
 from app.domain.enums import Currency
+
+EXCHANGE_API_URL: str = current_app.config["EXCHANGE_API_URL"]
+SAME_CURRENCY_RATE: Decimal = Decimal("1.0")
 
 
 def get_exchange_rate(
@@ -12,38 +17,39 @@ def get_exchange_rate(
     explicit_rate: Optional[Decimal] = None,
 ) -> Decimal:
     """
-    Exchange rate boundary.
-
-    Supports three scenarios:
-
-    1) The caller already has an exchange rate (e.g. from an external API
-       or from a test):
-         - Pass it as `explicit_rate` and it will be returned directly.
-
-    2) Same-currency exchange:
-         - If source == target, returns 1.0.
-
-    3) Real external integration (not implemented here):
-         - If currencies differ and no explicit_rate is given, this is the
-           place where an HTTP call to an external exchange-rate API would
-           be implemented.
-         - For now, we raise NotImplementedError so missing integration is
-           visible and not silently ignored.
+    Get the exchange rate from source currency to target currency.
+    
+    **Returns:**
+    - If explicit_rate is provided, just return it.
+    - If source and target are the same, return 1.0.
+    - Otherwise, call the Frankfurter API using:
+        GET {EXCHANGE_API_URL}/latest?base={source}&symbols={target}
     """
-    # Case 1: caller already gave us a rate (e.g. from an external API)
     if explicit_rate is not None:
         return explicit_rate
 
-    # Case 2: same currency → no conversion needed
+    # Same currency → no conversion
     if source == target:
-        return Decimal("1.0")
+        return SAME_CURRENCY_RATE
 
-    # Case 3: this is where a real external API call would go.
-    # Example (not implemented):
-    #   response = requests.get(EXCHANGE_API_URL, params={...})
-    #   data = response.json()
-    #   return Decimal(str(data["rate"]))
-    raise NotImplementedError(
-        f"Exchange rate lookup for {source.value}/{target.value} "
-        "requires an explicit rate or an external API integration."
-    )
+    # Call external exchange rate API
+    try:
+        response = requests.get(
+            f"{EXCHANGE_API_URL}/latest",
+            params={
+                "base": source.value,     # e.g "DKK"
+                "symbols": target.value,  # e.g "USD"
+            },
+            timeout=5, # seconds
+        )
+        response.raise_for_status()
+        data = response.json()
+    except requests.RequestException as exc:
+        raise RuntimeError(f"Failed to fetch exchange rate: {exc}") from exc
+
+    # Extract rate from response data
+    try:
+        rate_str = str(data["rates"][target.value])
+        return Decimal(rate_str)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RuntimeError(f"Unexpected exchange API response: {data}") from exc
