@@ -1,19 +1,35 @@
-# setup Flask application factory
+# app/__init__.py
+import os
 from flask import Flask
-from .config import Config
-from .database import init_db
 
-def create_app(test_config: dict | None = None):
+from .config import Config
+from .database import init_db, init_schema
+
+
+def create_app(test_config: dict = None) -> Flask:
+    """
+    Flask application factory.
+    """
     app = Flask(__name__, instance_relative_config=True)
+
     app.config.from_object(Config)
 
-    if test_config:
+    # Ensure instance folder exists (for SQLite file, etc.)
+    try:
+        os.makedirs(app.instance_path, exist_ok=True)
+    except OSError:
+        pass
+
+    # For tests: allow overriding any config key, including DATABASE
+    if test_config is not None:
         app.config.update(test_config)
 
-    # DB teardown hook
     init_db(app)
 
-    # Register blueprints
+    with app.app_context():
+        init_schema()
+
+    # --- Blueprint registration ---
     from .routes.health import health_bp
     app.register_blueprint(health_bp)
 

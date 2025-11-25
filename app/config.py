@@ -1,10 +1,28 @@
+# app/config.py
 import os
 
+# Project root (one level above app/)
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+
 class Config:
-	SECRET_KEY = os.environ.get('SECRET_KEY', 'dev')
-	DATABASE = os.path.join(os.getcwd(), 'instance', 'wallet.db')
-	API_BASE_PATH = '/api'
+    """
+    Default configuration for the wallet application.
+    """
+    SECRET_KEY = os.environ.get("SECRET_KEY", "dev")
+    DATABASE = os.environ.get(
+        "DATABASE",
+        os.path.join(BASE_DIR, "instance", "wallet.db"),
+    )
+
 
 class TestConfig(Config):
-	TESTING = True
-	DATABASE = os.path.join(os.getcwd(), 'instance', 'test_wallet.db')
+    """
+    Configuration used in tests.
+    (Can be overridden passing test_config dict to create_app.)
+    """
+    TESTING = True
+    DATABASE = os.environ.get(
+        "TEST_DATABASE",
+        os.path.join(BASE_DIR, "instance", "test_wallet.db"),
+    )
