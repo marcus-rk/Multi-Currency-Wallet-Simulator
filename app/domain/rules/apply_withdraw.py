@@ -5,9 +5,9 @@ from typing import Optional, Tuple
 from ..models.Transaction import Transaction
 from ..models.Wallet import Wallet
 from ..enums import (
-    Currency, 
-    TransactionStatus, 
-    TransactionErrorCode
+    Currency,
+    TransactionStatus,
+    TransactionErrorCode,
 )
 
 
@@ -61,7 +61,7 @@ def _validate_withdraw(
     currency: Currency,
 ) -> Optional[TransactionErrorCode]:
     """
-    Returns an error code string if the withdrawal is invalid, otherwise None.
+    Returns an error code if the withdrawal is invalid, otherwise None.
     """
     if not wallet.is_active():
         return TransactionErrorCode.INVALID_WALLET_STATE

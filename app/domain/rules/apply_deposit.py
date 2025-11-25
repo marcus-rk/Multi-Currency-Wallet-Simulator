@@ -5,10 +5,9 @@ from typing import Optional, Tuple
 from ..models.Transaction import Transaction
 from ..models.Wallet import Wallet
 from ..enums import (
-    Currency, 
-    TransactionStatus, 
-    TransactionErrorCode, 
-    TransactionType
+    Currency,
+    TransactionStatus,
+    TransactionErrorCode,
 )
 
 
@@ -62,7 +61,7 @@ def _validate_deposit(
     currency: Currency,
 ) -> Optional[TransactionErrorCode]:
     """
-    Returns an error code string if the deposit is invalid, otherwise None.
+    Returns an error code if the deposit is invalid, otherwise None.
     """
     if not wallet.is_active():
         return TransactionErrorCode.INVALID_WALLET_STATE

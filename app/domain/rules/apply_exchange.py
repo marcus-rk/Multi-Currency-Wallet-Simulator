@@ -22,7 +22,7 @@ def apply_exchange(
     error_code = _validate_exchange(source_wallet, target_wallet, amount, fx_rate)
 
     if error_code is None:
-        credited_amount = amount * fx_rate  # TODO: rounding rule applied later
+        credited_amount = amount * fx_rate  # TODO: apply rounding rule here later
         source_balance_after = source_wallet.balance - amount
         target_balance_after = target_wallet.balance + credited_amount
 
@@ -45,10 +45,12 @@ def apply_exchange(
         )
 
         status = TransactionStatus.COMPLETED
+        credited_currency = target_wallet.currency
     else:
         updated_source = source_wallet
         updated_target = target_wallet
         credited_amount = None
+        credited_currency = None
         source_balance_after = None
         target_balance_after = None
         status = TransactionStatus.FAILED
@@ -60,7 +62,7 @@ def apply_exchange(
         amount=amount,
         source_currency=source_wallet.currency,
         credited_amount=credited_amount,
-        credited_currency=target_wallet.currency,
+        credited_currency=credited_currency,
         source_balance_after=source_balance_after,
         target_balance_after=target_balance_after,
         status=status,
