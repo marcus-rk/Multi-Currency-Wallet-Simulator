@@ -30,7 +30,7 @@ class Transaction:
     ) -> "Transaction":
         return Transaction(
             id=transaction_id,
-            type="DEPOSIT",
+            type=TransactionType.DEPOSIT,
             source_wallet_id=None,
             target_wallet_id=wallet_id,
             amount=amount,
@@ -52,7 +52,7 @@ class Transaction:
     ) -> "Transaction":
         return Transaction(
             id=transaction_id,
-            type="WITHDRAWAL",
+            type=TransactionType.WITHDRAWAL,
             source_wallet_id=wallet_id,
             target_wallet_id=None,
             amount=amount,
@@ -75,7 +75,7 @@ class Transaction:
     ) -> "Transaction":
         return Transaction(
             id=transaction_id,
-            type="EXCHANGE",
+            type=TransactionType.EXCHANGE,
             source_wallet_id=source_wallet_id,
             target_wallet_id=target_wallet_id,
             amount=amount,

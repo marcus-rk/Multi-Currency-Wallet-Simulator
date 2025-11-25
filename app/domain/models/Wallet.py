@@ -14,4 +14,4 @@ class Wallet:
     updated_at: datetime
 
     def is_active(self) -> bool:
-        return self.status == WalletStatus.ACTIVE
+        return self.status is WalletStatus.ACTIVE
