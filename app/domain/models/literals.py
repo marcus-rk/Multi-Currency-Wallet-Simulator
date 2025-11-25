@@ -10,6 +10,8 @@ TransactionErrorCode = Literal[
     "INVALID_WALLET_STATE",
     "INVALID_AMOUNT",
     "UNSUPPORTED_CURRENCY",
+    "INSUFFICIENT_FUNDS",
+    "EXCHANGE_RATE_UNAVAILABLE",
 ]
 
 # Wallet statuses and supported currencies

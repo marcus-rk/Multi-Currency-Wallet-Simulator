@@ -17,9 +17,8 @@ def apply_deposit(
     """
     Pure domain rule for deposits.
     - Returns (updated_wallet, transaction).
-    - Error: if any, is in transaction's error_code field.
+    - If invalid, error is in transaction.error_code and wallet is unchanged.
     """
-
     error_code = validate_deposit(wallet, amount, currency)
 
     if error_code is None:
@@ -31,18 +30,20 @@ def apply_deposit(
             created_at=wallet.created_at,
             updated_at=now,
         )
-        status = TransactionStatus.COMPLETED
+        status: TransactionStatus = "COMPLETED"
     else:
         updated_wallet = wallet
-        status = TransactionStatus.FAILED
+        status = "FAILED"
 
-    transaction = Transaction.deposit(
-        transaction_id=transaction_id,
-        wallet_id=wallet.id,
+    transaction = Transaction(
+        id=transaction_id,
+        type="DEPOSIT",
+        source_wallet_id=None,
+        target_wallet_id=wallet.id,
         amount=amount,
         currency=currency,
         status=status,
-        error_code=error_code, # either None or a string
+        error_code=error_code,
         created_at=now,
     )
 
@@ -53,17 +54,17 @@ def validate_deposit(
     wallet: Wallet,
     amount: Decimal,
     currency: Currency,
-) -> Optional[str]:
+) -> Optional[TransactionErrorCode]:
     """
     Returns an error code string if the deposit is invalid, otherwise None.
     """
     if not wallet.is_active():
-        return TransactionErrorCode.INVALID_WALLET_STATE
+        return "INVALID_WALLET_STATE"
 
     if amount <= Decimal("0"):
-        return TransactionErrorCode.INVALID_AMOUNT
+        return "INVALID_AMOUNT"
 
-    if currency is not wallet.currency:
-        return TransactionErrorCode.UNSUPPORTED_CURRENCY
+    if currency != wallet.currency:
+        return "UNSUPPORTED_CURRENCY"
 
     return None
