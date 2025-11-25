@@ -9,9 +9,9 @@ from app.domain.models.Wallet import Wallet
 def row_to_wallet(row) -> Wallet:
     return Wallet(
         id=row["id"],
-        currency=row["currency"],
+        currency=Currency(row["currency"]),
         balance=Decimal(row["balance"]),
-        status=row["status"],  # assume DB stores "ACTIVE"/"FROZEN"/"CLOSED"
+        status=WalletStatus(row["status"]),  # assume DB stores "ACTIVE"/"FROZEN"/"CLOSED"
         created_at=datetime.fromisoformat(row["created_at"]),
         updated_at=datetime.fromisoformat(row["updated_at"]),
     )

@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional, Tuple
@@ -7,7 +8,7 @@ from ..models.Wallet import Wallet
 from ..models.enums import Currency, TransactionStatus, TransactionErrorCode, TransactionType
 
 
-def apply_deposit(
+def apply_withdraw(
     wallet: Wallet,
     amount: Decimal,
     currency: Currency,
@@ -15,17 +16,17 @@ def apply_deposit(
     now: datetime,
 ) -> Tuple[Wallet, Transaction]:
     """
-    Pure domain rule for deposits.
+    Pure domain rule for withdrawals.
     - Returns (updated_wallet, transaction).
     - If invalid, error is in transaction.error_code and wallet is unchanged.
     """
-    error_code = validate_deposit(wallet, amount, currency)
+    error_code = validate_withdraw(wallet, amount, currency)
 
     if error_code is None:
         updated_wallet = Wallet(
             id=wallet.id,
             currency=wallet.currency,
-            balance=wallet.balance + amount,
+            balance=wallet.balance - amount,
             status=wallet.status,
             created_at=wallet.created_at,
             updated_at=now,
@@ -37,9 +38,9 @@ def apply_deposit(
 
     transaction = Transaction(
         id=transaction_id,
-        type=TransactionType.DEPOSIT,
-        source_wallet_id=None,
-        target_wallet_id=wallet.id,
+        type=TransactionType.WITHDRAWAL,
+        source_wallet_id=wallet.id,
+        target_wallet_id=None,
         amount=amount,
         currency=currency,
         status=status,
@@ -50,13 +51,13 @@ def apply_deposit(
     return updated_wallet, transaction
 
 
-def validate_deposit(
+def validate_withdraw(
     wallet: Wallet,
     amount: Decimal,
     currency: Currency,
 ) -> Optional[TransactionErrorCode]:
     """
-    Returns an error code string if the deposit is invalid, otherwise None.
+    Returns an error code string if the withdrawal is invalid, otherwise None.
     """
     if not wallet.is_active():
         return TransactionErrorCode.INVALID_WALLET_STATE
@@ -66,5 +67,8 @@ def validate_deposit(
 
     if currency != wallet.currency:
         return TransactionErrorCode.UNSUPPORTED_CURRENCY
+
+    if amount > wallet.balance:
+        return TransactionErrorCode.INSUFFICIENT_FUNDS
 
     return None

@@ -1,0 +1,28 @@
+
+from enum import Enum
+
+class TransactionType(Enum):
+    DEPOSIT = "DEPOSIT"
+    WITHDRAWAL = "WITHDRAWAL"
+    EXCHANGE = "EXCHANGE"
+
+class TransactionStatus(Enum):
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+class TransactionErrorCode(Enum):
+    INVALID_WALLET_STATE = "INVALID_WALLET_STATE"
+    INVALID_AMOUNT = "INVALID_AMOUNT"
+    UNSUPPORTED_CURRENCY = "UNSUPPORTED_CURRENCY"
+    INSUFFICIENT_FUNDS = "INSUFFICIENT_FUNDS"
+    EXCHANGE_RATE_UNAVAILABLE = "EXCHANGE_RATE_UNAVAILABLE"
+
+class WalletStatus(Enum):
+    ACTIVE = "ACTIVE"
+    FROZEN = "FROZEN"
+    CLOSED = "CLOSED"
+
+class Currency(Enum):
+    DKK = "DKK"
+    EUR = "EUR"
+    USD = "USD"
