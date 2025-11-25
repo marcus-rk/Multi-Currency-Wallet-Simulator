@@ -26,18 +26,21 @@ def apply_deposit(
     error_code = _validate_deposit(wallet, amount, currency)
 
     if error_code is None:
+        new_balance = wallet.balance + amount
         updated_wallet = Wallet(
             id=wallet.id,
             currency=wallet.currency,
-            balance=wallet.balance + amount,
+            balance=new_balance,
             status=wallet.status,
             created_at=wallet.created_at,
             updated_at=now,
         )
         status = TransactionStatus.COMPLETED
+        balance_after = new_balance
     else:
         updated_wallet = wallet
         status = TransactionStatus.FAILED
+        balance_after = None
 
     transaction = Transaction.deposit(
         transaction_id=transaction_id,
@@ -47,6 +50,7 @@ def apply_deposit(
         status=status,
         error_code=error_code,
         created_at=now,
+        target_balance_after=balance_after,
     )
 
     return updated_wallet, transaction

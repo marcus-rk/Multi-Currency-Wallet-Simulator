@@ -10,7 +10,7 @@ SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS wallets (
     id TEXT PRIMARY KEY,
     currency TEXT NOT NULL,
-    balance TEXT NOT NULL,
+    balance NUMERIC NOT NULL,
     status TEXT NOT NULL,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
@@ -21,8 +21,12 @@ CREATE TABLE IF NOT EXISTS transactions (
     type TEXT NOT NULL,
     source_wallet_id TEXT,
     target_wallet_id TEXT,
-    amount TEXT NOT NULL,
+    amount NUMERIC NOT NULL,
     currency TEXT NOT NULL,
+    credited_amount NUMERIC,
+    credited_currency TEXT,
+    source_balance_after NUMERIC,
+    target_balance_after NUMERIC,
     status TEXT NOT NULL,
     error_code TEXT,
     created_at TEXT NOT NULL,
