@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional, Tuple
@@ -86,8 +85,7 @@ def validate_exchange(
     if amount > source_wallet.balance:
         return TransactionErrorCode.INSUFFICIENT_FUNDS
 
-    # FX_UNAVAILABLE is not in the Enum, so return None for now
     if fx_rate is None or fx_rate <= Decimal("0"):
-        return None
+        return TransactionErrorCode.EXCHANGE_RATE_UNAVAILABLE
 
     return None

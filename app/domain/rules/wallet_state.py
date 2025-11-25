@@ -1,6 +1,5 @@
-import logging
 from datetime import datetime
-from decimal import Decimal
+
 
 from ..models.Wallet import Wallet
 from ..models.enums import WalletStatus
