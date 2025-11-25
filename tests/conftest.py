@@ -13,10 +13,10 @@ from app.domain.enums import Currency, WalletStatus
 @pytest.fixture
 def get_fixed_timestamp() -> datetime:
     """
-    Fixed datetime makes tests deterministic and avoids
-    small timing differences when asserting on created_at/updated_at.
+    Shared fixed datetime so tests are deterministic when asserting
+    on created_at/updated_at.
 
-    datetime: 2025-01-01 12:00:00 (YYYY-MM-DD HH:MM:SS)
+    Value: 2025-01-01 12:00:00 (YYYY-MM-DD HH:MM:SS)
     """
     return datetime(2025, 1, 1, 12, 0, 0)
 
