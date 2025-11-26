@@ -23,7 +23,7 @@ from app.domain.rules.apply_deposit import apply_deposit
 
 
 # ------------------------------------------------
-# Positive tests (EP + 3-V BVA)
+# Positive testing (EP + 3-V BVA)
 # ------------------------------------------------
 
 @pytest.mark.parametrize("amount", [
@@ -91,16 +91,53 @@ def test_deposit_adds_correctly_to_balance(wallet_factory, get_fixed_timestamp, 
     assert updated_wallet.balance == expected_balance
 
 
+@pytest.mark.parametrize("currency", [
+    Currency.DKK,
+    Currency.EUR,
+    Currency.USD,
+])
+def test_deposit_supported_currencies_pass(wallet_factory, get_fixed_timestamp, currency):
+    # Arrange
+    initial_balance = Decimal("100.00")
+    wallet = wallet_factory(
+        balance=initial_balance,
+        currency=currency,
+        status=WalletStatus.ACTIVE,
+    )
+
+    # Act
+    updated_wallet, transaction = apply_deposit(
+        wallet=wallet,
+        amount=Decimal("10.00"),  # any valid amount from amount EP
+        currency=currency,
+        transaction_id=f"tx-{currency.value.lower()}-deposit",
+        now=get_fixed_timestamp,
+    )
+
+    # Assert
+    expected = (
+        initial_balance + Decimal("10.00"),
+        TransactionStatus.COMPLETED,
+        None,
+    )
+    actual = (
+        updated_wallet.balance,
+        transaction.status,
+        transaction.error_code,
+    )
+    assert actual == expected
+
+
 # ------------------------------------------------
-# Negative tests (EP + 3-V BVA)
+# Negative testing (EP + 3-V BVA)
 # ------------------------------------------------
 
 @pytest.mark.parametrize("amount", [
-    Decimal("-9999999999"), # NOTE: found error -> forgot minus
-    Decimal("-1000000"),    # EP: representative large negative amount
-    Decimal("-0.02"),       
-    Decimal("-0.01"),
-    Decimal("0.00"),        # EP/BVA: zero is invalid for deposit
+    Decimal("-9999999999"), # extreme negative EP
+    Decimal("-1000000"),    # large negative
+    Decimal("-0.02"),       # just below boundary -0.01
+    Decimal("-0.01"),       # boundary to zero
+    Decimal("0.00"),        # boundary between invalid and valid
 ])
 def test_deposit_invalid_amount_fails(wallet_factory, get_fixed_timestamp, amount: Decimal):
     # Arrange
@@ -132,11 +169,11 @@ def test_deposit_invalid_amount_fails(wallet_factory, get_fixed_timestamp, amoun
 
 
 @pytest.mark.parametrize("amount", [
-    Decimal("-9999999999"),
-    Decimal("-1000000"),
-    Decimal("-0.02"),
-    Decimal("-0.01"), 
-    Decimal("0.00"),
+    Decimal("-9999999999"), # extreme negative EP
+    Decimal("-1000000"),    # large negative
+    Decimal("-0.02"),       # just below boundary -0.01
+    Decimal("-0.01"),       # boundary to zero
+    Decimal("0.00"),        # boundary between invalid and valid
 ])
 def test_deposit_negative_amount_keeps_balance(wallet_factory, get_fixed_timestamp, amount: Decimal):
     # Arrange
@@ -161,7 +198,7 @@ def test_deposit_negative_amount_keeps_balance(wallet_factory, get_fixed_timesta
 
 
 # ------------------------------------------------
-# Negative tests (Decision Table Wallet Status)
+# Negative testing (Decision Table Wallet Status)
 # ------------------------------------------------
 
 @pytest.mark.parametrize("status", [
@@ -198,7 +235,7 @@ def test_deposit_on_non_active_wallet_fails(wallet_factory, get_fixed_timestamp,
 
 
 # ------------------------------------------------
-# Negative tests: currency mismatch (Currency EP + decision rule)
+# Negative testing: currency mismatch (Currency EP + decision rule)
 # ------------------------------------------------
 
 @pytest.mark.parametrize("deposit_currency", [
@@ -235,7 +272,7 @@ def test_deposit_currency_mismatch_fails(wallet_factory, get_fixed_timestamp, de
 
 
 # ------------------------------------------------
-# Data type tests
+# Data type testing
 # ------------------------------------------------
 
 @pytest.mark.parametrize("amount", [
@@ -268,7 +305,7 @@ def test_deposit_returns_decimal_balance_and_amount(wallet_factory, get_fixed_ti
 
 
 # ------------------------------------------------
-# Error tests (wrong data type for amount)
+# Error testing (wrong data type for amount)
 # ------------------------------------------------
 
 @pytest.mark.parametrize("amount", [
