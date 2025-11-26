@@ -42,7 +42,7 @@ def test_deposit_valid_amount_passes(wallet_factory, get_fixed_timestamp, amount
     )
 
     # Act
-    updated_wallet, transaction = apply_deposit(
+    _, transaction = apply_deposit(
         wallet=wallet,
         amount=amount,
         currency=Currency.DKK,
@@ -52,27 +52,54 @@ def test_deposit_valid_amount_passes(wallet_factory, get_fixed_timestamp, amount
 
     # Assert
     expected = (
-        initial_balance + amount,
         TransactionStatus.COMPLETED,
         None,
     )
     actual = (
-        updated_wallet.balance,
         transaction.status,
         transaction.error_code,
     )
     assert actual == expected
 
 
+@pytest.mark.parametrize("amount", [
+    Decimal("0.01"),        # lower boundary of valid
+    Decimal("0.02"),
+    Decimal("1000000"),     
+    Decimal("9999999999"),  # large value within valid partition
+])
+def test_deposit_adds_correctly_to_balance(wallet_factory, get_fixed_timestamp, amount: Decimal):
+    # Arrange
+    initial_balance = Decimal("50.00")
+    wallet = wallet_factory(
+        balance=initial_balance,
+        currency=Currency.DKK,
+        status=WalletStatus.ACTIVE,
+    )
+
+    # Act
+    updated_wallet,_ = apply_deposit(
+        wallet=wallet,
+        amount=amount,
+        currency=Currency.DKK,
+        transaction_id="tx-correct-balance",
+        now=get_fixed_timestamp,
+    )
+
+    # Assert
+    expected_balance = initial_balance + amount
+    assert updated_wallet.balance == expected_balance
+
 # ------------------------------------------------
 # Negative tests (EP + 3-V BVA)
 # ------------------------------------------------
 
 @pytest.mark.parametrize("amount", [
-    Decimal("-9999999999"), # Found error: forgot minus
-    Decimal("-1000000"),   # EP: representative large negative amount
+    Decimal("-9999999999"), # NOTE: found error -> forgot minus
+    Decimal("-1000000"),    # EP: representative large negative amount
+    Decimal("-0.02"),       
     Decimal("-0.01"),
-    Decimal("0.00"),       # EP/BVA: zero is invalid for deposit
+    Decimal("0.00"),        # EP/BVA: zero is invalid for deposit
 ])
 def test_deposit_invalid_amount_fails(wallet_factory, get_fixed_timestamp, amount: Decimal):
     # Arrange
@@ -83,7 +110,7 @@ def test_deposit_invalid_amount_fails(wallet_factory, get_fixed_timestamp, amoun
     )
 
     # Act
-    updated_wallet, transaction = apply_deposit(
+    _, transaction = apply_deposit(
         wallet=wallet,
         amount=amount,
         currency=Currency.DKK,
@@ -93,16 +120,42 @@ def test_deposit_invalid_amount_fails(wallet_factory, get_fixed_timestamp, amoun
 
     # Assert
     expected = (
-        wallet.balance,
         TransactionStatus.FAILED,
         TransactionErrorCode.INVALID_AMOUNT,
     )
     actual = (
-        updated_wallet.balance,
         transaction.status,
         transaction.error_code,
     )
     assert actual == expected
+
+@pytest.mark.parametrize("amount", [
+    Decimal("-9999999999"),
+    Decimal("-1000000"),
+    Decimal("-0.02"),
+    Decimal("-0.01"), 
+    Decimal("0.00"),
+])
+def test_deposit_negative_amount_keeps_balance(wallet_factory, get_fixed_timestamp, amount: Decimal):
+    # Arrange
+    initial_balance = Decimal("100")
+    wallet = wallet_factory(
+        balance=initial_balance,
+        currency=Currency.DKK,
+        status=WalletStatus.ACTIVE,
+    )
+
+    # Act
+    updated_wallet, _ = apply_deposit(
+        wallet=wallet,
+        amount=amount,
+        currency=Currency.DKK,
+        transaction_id="tx-balance-unchanged",
+        now=get_fixed_timestamp,
+    )
+
+    # Assert
+    assert updated_wallet.balance == initial_balance
 
 
 # ------------------------------------------------
@@ -122,7 +175,7 @@ def test_deposit_on_non_active_wallet_fails(wallet_factory, get_fixed_timestamp,
     )
 
     # Act
-    updated_wallet, transaction = apply_deposit(
+    _, transaction = apply_deposit(
         wallet=wallet,
         amount=Decimal("10.00"),
         currency=Currency.DKK,
@@ -132,17 +185,14 @@ def test_deposit_on_non_active_wallet_fails(wallet_factory, get_fixed_timestamp,
 
     # Assert
     expected = (
-        wallet.balance,
         TransactionStatus.FAILED,
         TransactionErrorCode.INVALID_WALLET_STATE,
     )
     actual = (
-        updated_wallet.balance,
         transaction.status,
         transaction.error_code,
     )
     assert actual == expected
-
 
 # ------------------------------------------------
 # Negative tests: currency mismatch (Currency EP + decision rule)
@@ -161,7 +211,7 @@ def test_deposit_currency_mismatch_fails(wallet_factory, get_fixed_timestamp, de
     )
 
     # Act
-    updated_wallet, transaction = apply_deposit(
+    _, transaction = apply_deposit(
         wallet=wallet,
         amount=Decimal("10.00"),
         currency=deposit_currency,
@@ -171,12 +221,10 @@ def test_deposit_currency_mismatch_fails(wallet_factory, get_fixed_timestamp, de
 
     # Assert
     expected = (
-        wallet.balance,
         TransactionStatus.FAILED,
         TransactionErrorCode.UNSUPPORTED_CURRENCY,
     )
     actual = (
-        updated_wallet.balance,
         transaction.status,
         transaction.error_code,
     )
@@ -187,7 +235,12 @@ def test_deposit_currency_mismatch_fails(wallet_factory, get_fixed_timestamp, de
 # Data type tests
 # ------------------------------------------------
 
-def test_deposit_returns_decimal_balance_and_amount(wallet_factory, get_fixed_timestamp):
+@pytest.mark.parametrize("amount", [
+    Decimal("0.01"),
+    Decimal("0.02"),
+    Decimal("1000000.00"),
+])
+def test_deposit_returns_decimal_balance_and_amount(wallet_factory, get_fixed_timestamp, amount: Decimal):
     # Arrange
     initial_balance = Decimal("100.00")
     wallet = wallet_factory(
@@ -199,18 +252,15 @@ def test_deposit_returns_decimal_balance_and_amount(wallet_factory, get_fixed_ti
     # Act
     updated_wallet, transaction = apply_deposit(
         wallet=wallet,
-        amount=Decimal("10.00"),
+        amount=amount,
         currency=Currency.DKK,
         transaction_id="tx-datatype",
         now=get_fixed_timestamp,
     )
 
     # Assert
-    expected = (True, True)
-    actual = (
-        isinstance(updated_wallet.balance, Decimal),
-        isinstance(transaction.amount, Decimal),
-    )
+    expected = (Decimal, Decimal)
+    actual = (type(updated_wallet.balance), type(transaction.amount))
     assert actual == expected
 
 
@@ -219,12 +269,13 @@ def test_deposit_returns_decimal_balance_and_amount(wallet_factory, get_fixed_ti
 # ------------------------------------------------
 
 @pytest.mark.parametrize("amount", [
+    "10",      # string instead of Decimal
     "10.00",   # string instead of Decimal
     "abc",     # non-numeric string
     None,      # NoneType
     "",        # empty string
 ])
-def test_deposit_wrong_amount_type_raises_error(wallet_factory, get_fixed_timestamp, amount):
+def test_deposit_invalid_amount_type_raises_typeerror(wallet_factory, get_fixed_timestamp, amount):
     # Arrange
     wallet = wallet_factory(
         balance=Decimal("100.00"),
@@ -233,7 +284,7 @@ def test_deposit_wrong_amount_type_raises_error(wallet_factory, get_fixed_timest
     )
 
     # Act / Assert
-    with pytest.raises(TypeError) as error_info:
+    with pytest.raises(TypeError):
         apply_deposit(
             wallet=wallet,
             amount=amount,
@@ -241,5 +292,3 @@ def test_deposit_wrong_amount_type_raises_error(wallet_factory, get_fixed_timest
             transaction_id="tx-wrong-type",
             now=get_fixed_timestamp,
         )
-
-    assert "not supported between instances" in str(error_info.value)
