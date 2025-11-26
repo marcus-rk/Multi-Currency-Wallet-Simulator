@@ -1,13 +1,15 @@
 # tests/conftest.py
-
 from datetime import datetime
 from decimal import Decimal
 from typing import Callable, Optional
-
 import pytest
-
 from app.domain.models.Wallet import Wallet
 from app.domain.enums import Currency, WalletStatus
+
+# Run all unit tests with pytest: 
+#   python -m pytest tests/unit
+# Run all unit tests with coverage: 
+#   python -m pytest --cov=app --cov-report=term-missing tests/unit
 
 
 @pytest.fixture
