@@ -90,6 +90,7 @@ def test_deposit_adds_correctly_to_balance(wallet_factory, get_fixed_timestamp, 
     expected_balance = initial_balance + amount
     assert updated_wallet.balance == expected_balance
 
+
 # ------------------------------------------------
 # Negative tests (EP + 3-V BVA)
 # ------------------------------------------------
@@ -128,6 +129,7 @@ def test_deposit_invalid_amount_fails(wallet_factory, get_fixed_timestamp, amoun
         transaction.error_code,
     )
     assert actual == expected
+
 
 @pytest.mark.parametrize("amount", [
     Decimal("-9999999999"),
@@ -193,6 +195,7 @@ def test_deposit_on_non_active_wallet_fails(wallet_factory, get_fixed_timestamp,
         transaction.error_code,
     )
     assert actual == expected
+
 
 # ------------------------------------------------
 # Negative tests: currency mismatch (Currency EP + decision rule)
