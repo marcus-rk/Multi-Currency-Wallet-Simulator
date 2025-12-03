@@ -34,7 +34,6 @@ from app.domain.rules.apply_withdraw import apply_withdraw
 ])
 def test_withdraw_valid_amount_passes(wallet_factory, get_fixed_timestamp, amount: Decimal):
     # Arrange
-    # Ensure balance is sufficient for the largest test case to isolate "valid amount" logic
     initial_balance = Decimal("100000000000")
     wallet = wallet_factory(
         balance=initial_balance,
@@ -64,9 +63,9 @@ def test_withdraw_valid_amount_passes(wallet_factory, get_fixed_timestamp, amoun
 
 
 @pytest.mark.parametrize("initial_balance, amount, expected_remaining", [
-    (Decimal("100.00"), Decimal("0.01"), Decimal("99.99")),
+    (Decimal("100.00"), Decimal("99.99"), Decimal("0.01")),  # Boundary: just below balance (valid)
+    (Decimal("100.00"), Decimal("100.00"), Decimal("0.00")), # Boundary: exact balance (valid)
     (Decimal("0.01"), Decimal("0.01"), Decimal("0.00")),     # Boundary: exact balance (small)
-    (Decimal("100.00"), Decimal("100.00"), Decimal("0.00")), # Boundary: exact balance (typical)
 ])
 def test_withdraw_deducts_correctly_from_balance(wallet_factory, get_fixed_timestamp, initial_balance, amount, expected_remaining):
     # Arrange
@@ -89,16 +88,53 @@ def test_withdraw_deducts_correctly_from_balance(wallet_factory, get_fixed_times
     assert updated_wallet.balance == expected_remaining
 
 
+@pytest.mark.parametrize("currency", [
+    Currency.DKK,
+    Currency.EUR,
+    Currency.USD,
+])
+def test_withdraw_supported_currencies_pass(wallet_factory, get_fixed_timestamp, currency):
+    # Arrange
+    initial_balance = Decimal("100.00")
+    wallet = wallet_factory(
+        balance=initial_balance,
+        currency=currency,
+        status=WalletStatus.ACTIVE,
+    )
+
+    # Act
+    updated_wallet, transaction = apply_withdraw(
+        wallet=wallet,
+        amount=Decimal("10.00"),
+        currency=currency,
+        transaction_id=f"tx-{currency.value.lower()}-withdraw",
+        now=get_fixed_timestamp,
+    )
+
+    # Assert
+    expected = (
+        initial_balance - Decimal("10.00"),
+        TransactionStatus.COMPLETED,
+        None,
+    )
+    actual = (
+        updated_wallet.balance,
+        transaction.status,
+        transaction.error_code,
+    )
+    assert actual == expected
+
+
 # ------------------------------------------------
 # Negative testing (EP + 3-V BVA)
 # ------------------------------------------------
 
 @pytest.mark.parametrize("amount", [
     Decimal("-9999999999"), # extreme negative EP
-    Decimal("-1000000"),    # large negative
+    Decimal("-10.00"),      # negative
     Decimal("-0.02"),       # just below boundary -0.01
-    Decimal("-0.01"),       # boundary to zero
-    Decimal("0.00"),        # boundary between invalid and valid
+    Decimal("-0.01"),       # boundary negative
+    Decimal("0.00"),        # boundary invalid
 ])
 def test_withdraw_invalid_amount_fails(wallet_factory, get_fixed_timestamp, amount: Decimal):
     # Arrange
@@ -127,6 +163,35 @@ def test_withdraw_invalid_amount_fails(wallet_factory, get_fixed_timestamp, amou
         transaction.error_code,
     )
     assert actual == expected
+
+
+@pytest.mark.parametrize("amount", [
+    Decimal("-9999999999"), # extreme negative EP
+    Decimal("-10.00"),      # negative
+    Decimal("-0.02"),       # just below boundary -0.01
+    Decimal("-0.01"),       # boundary negative
+    Decimal("0.00"),        # boundary invalid
+])
+def test_withdraw_negative_amount_keeps_balance(wallet_factory, get_fixed_timestamp, amount: Decimal):
+    # Arrange
+    initial_balance = Decimal("100.00")
+    wallet = wallet_factory(
+        balance=initial_balance,
+        currency=Currency.DKK,
+        status=WalletStatus.ACTIVE,
+    )
+
+    # Act
+    updated_wallet, _ = apply_withdraw(
+        wallet=wallet,
+        amount=amount,
+        currency=Currency.DKK,
+        transaction_id="tx-balance-unchanged",
+        now=get_fixed_timestamp,
+    )
+
+    # Assert
+    assert updated_wallet.balance == initial_balance
 
 
 @pytest.mark.parametrize("amount", [
@@ -231,6 +296,35 @@ def test_withdraw_currency_mismatch_fails(wallet_factory, get_fixed_timestamp, w
 # ------------------------------------------------
 # Data type testing
 # ------------------------------------------------
+
+@pytest.mark.parametrize("amount", [
+    Decimal("0.01"),
+    Decimal("0.02"),
+    Decimal("1000000.00"),
+])
+def test_withdraw_returns_decimal_balance_and_amount(wallet_factory, get_fixed_timestamp, amount: Decimal):
+    # Arrange
+    initial_balance = Decimal("10000000.00")
+    wallet = wallet_factory(
+        balance=initial_balance,
+        currency=Currency.DKK,
+        status=WalletStatus.ACTIVE,
+    )
+
+    # Act
+    updated_wallet, transaction = apply_withdraw(
+        wallet=wallet,
+        amount=amount,
+        currency=Currency.DKK,
+        transaction_id="tx-datatype",
+        now=get_fixed_timestamp,
+    )
+
+    # Assert
+    expected = (Decimal, Decimal)
+    actual = (type(updated_wallet.balance), type(transaction.amount))
+    assert actual == expected
+
 
 @pytest.mark.parametrize("amount", [
     "10",      # string instead of Decimal

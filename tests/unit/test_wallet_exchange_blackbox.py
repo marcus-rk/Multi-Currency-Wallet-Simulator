@@ -28,6 +28,7 @@ from app.domain.rules.apply_exchange import apply_exchange
 @pytest.mark.parametrize("amount, fx_rate, expected_target_credit", [
     (Decimal("0.01"), Decimal("1.0"), Decimal("0.01")),     # lower boundary of valid amount
     (Decimal("0.02"), Decimal("1.0"), Decimal("0.02")),     # just above lower boundary
+    (Decimal("10.00"), Decimal("0.01"), Decimal("0.10")),   # lower boundary of valid fx_rate
     (Decimal("1000000"), Decimal("1.5"), Decimal("1500000")), # typical valid large value
     (Decimal("9999999999"), Decimal("0.5"), Decimal("4999999999.5")), # large value within valid partition
 ])
@@ -69,7 +70,8 @@ def test_exchange_valid_amount_passes(wallet_factory, get_fixed_timestamp, amoun
 
 
 @pytest.mark.parametrize("initial_source, initial_target, amount, fx_rate, expected_source, expected_target", [
-    (Decimal("100.00"), Decimal("50.00"), Decimal("20.00"), Decimal("1.1"), Decimal("80.00"), Decimal("72.00")),
+    (Decimal("100.00"), Decimal("50.00"), Decimal("99.99"), Decimal("1.0"), Decimal("0.01"), Decimal("149.99")), # Boundary: just below balance
+    (Decimal("100.00"), Decimal("50.00"), Decimal("100.00"), Decimal("1.0"), Decimal("0.00"), Decimal("150.00")), # Boundary: exact balance
     (Decimal("0.01"), Decimal("0.00"), Decimal("0.01"), Decimal("1.0"), Decimal("0.00"), Decimal("0.01")), # Boundary: exact balance (small)
 ])
 def test_exchange_updates_balances_correctly(wallet_factory, get_fixed_timestamp, initial_source, initial_target, amount, fx_rate, expected_source, expected_target):
@@ -95,6 +97,50 @@ def test_exchange_updates_balances_correctly(wallet_factory, get_fixed_timestamp
 
     # Assert
     assert (updated_source.balance, updated_target.balance) == (expected_source, expected_target)
+
+
+@pytest.mark.parametrize("source_currency, target_currency", [
+    (Currency.DKK, Currency.EUR),
+    (Currency.USD, Currency.DKK),
+    (Currency.EUR, Currency.USD),
+])
+def test_exchange_supported_currency_pairs_pass(wallet_factory, get_fixed_timestamp, source_currency, target_currency):
+    # Arrange
+    source_wallet = wallet_factory(
+        balance=Decimal("100.00"),
+        currency=source_currency,
+        status=WalletStatus.ACTIVE,
+    )
+    target_wallet = wallet_factory(
+        balance=Decimal("0.00"),
+        currency=target_currency,
+        status=WalletStatus.ACTIVE,
+    )
+
+    # Act
+    updated_source, updated_target, transaction = apply_exchange(
+        source_wallet=source_wallet,
+        target_wallet=target_wallet,
+        amount=Decimal("10.00"),
+        fx_rate=Decimal("1.0"),
+        transaction_id="tx-currency-pair",
+        now=get_fixed_timestamp,
+    )
+
+    # Assert
+    expected = (
+        Decimal("90.00"),
+        Decimal("10.00"),
+        TransactionStatus.COMPLETED,
+        None,
+    )
+    actual = (
+        updated_source.balance,
+        updated_target.balance,
+        transaction.status,
+        transaction.error_code,
+    )
+    assert actual == expected
 
 
 # ------------------------------------------------
@@ -125,6 +171,34 @@ def test_exchange_invalid_amount_fails(wallet_factory, get_fixed_timestamp, amou
 
     # Assert
     assert transaction.error_code == TransactionErrorCode.INVALID_AMOUNT
+
+
+@pytest.mark.parametrize("amount", [
+    Decimal("-9999999999"), # extreme negative EP
+    Decimal("-1000000"),    # large negative
+    Decimal("-0.02"),       # just below boundary -0.01
+    Decimal("-0.01"),       # boundary to zero
+    Decimal("0.00"),        # boundary between invalid and valid
+])
+def test_exchange_failure_keeps_both_balances_unchanged(wallet_factory, get_fixed_timestamp, amount):
+    # Arrange
+    initial_source = Decimal("100.00")
+    initial_target = Decimal("50.00")
+    source = wallet_factory(balance=initial_source, currency=Currency.EUR)
+    target = wallet_factory(balance=initial_target, currency=Currency.USD)
+
+    # Act
+    updated_source, updated_target, _ = apply_exchange(
+        source_wallet=source,
+        target_wallet=target,
+        amount=amount,
+        fx_rate=Decimal("1.0"),
+        transaction_id="tx-balance-unchanged",
+        now=get_fixed_timestamp,
+    )
+
+    # Assert
+    assert (updated_source.balance, updated_target.balance) == (initial_source, initial_target)
 
 
 @pytest.mark.parametrize("amount", [
@@ -196,8 +270,9 @@ def test_exchange_same_currency_fails(wallet_factory, get_fixed_timestamp):
 
 @pytest.mark.parametrize("fx_rate", [
     None,
-    Decimal("0.00"),
-    Decimal("-1.5"),
+    Decimal("0.00"),        # Boundary: Zero (Invalid)
+    Decimal("-0.01"),       # Boundary: Just below zero (Invalid)
+    Decimal("-1.5"),        # Negative EP
 ])
 def test_exchange_invalid_fx_rate_fails(wallet_factory, get_fixed_timestamp, fx_rate):
     # Arrange

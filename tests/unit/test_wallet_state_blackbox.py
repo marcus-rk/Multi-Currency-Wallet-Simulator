@@ -7,7 +7,11 @@ Run with pytest:
 Run with coverage:
     python -m pytest --cov=app --cov-report=term-missing tests/unit/test_wallet_state_blackbox.py
 """
-from app.domain.enums import WalletStatus
+from decimal import Decimal
+
+import pytest
+
+from app.domain.enums import WalletStatus, Currency
 from app.domain.rules.wallet_state import (
     freeze_wallet,
     unfreeze_wallet,
@@ -61,6 +65,28 @@ def test_transition_frozen_to_closed(wallet_factory, get_fixed_timestamp):
 
     # Assert
     assert updated_wallet.status == WalletStatus.CLOSED
+
+
+def test_transition_preserves_data_integrity(wallet_factory, get_fixed_timestamp):
+    # Arrange
+    initial_balance = Decimal("123.45")
+    test_id = "test-uuid-123"
+    wallet = wallet_factory(
+        wallet_id=test_id,
+        balance=initial_balance,
+        currency=Currency.DKK,
+        status=WalletStatus.ACTIVE
+    )
+
+    # Act
+    updated_wallet = freeze_wallet(wallet, now=get_fixed_timestamp)
+
+    # Assert
+    # Verify ONLY status and updated_at changed
+    assert updated_wallet.id == wallet.id
+    assert updated_wallet.balance == wallet.balance
+    assert updated_wallet.currency == wallet.currency
+    assert updated_wallet.created_at == wallet.created_at
 
 
 # ------------------------------------------------
