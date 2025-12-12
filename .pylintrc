@@ -1,6 +1,4 @@
-'''Pylint configuration file'''
-
-[pylint]
+[MESSAGES CONTROL]
 disable =
     C0114, # missing-module-docstring
     C0115, # missing-class-docstring
@@ -14,6 +12,7 @@ disable =
     C0103, # invalid-name (for module names like Wallet.py)
     C0415, # import-outside-toplevel
     W0511, # fixme (TODOs)
+    C0411, # wrong-import-order
 
-[pylint.FORMAT]
+[FORMAT]
 max-line-length = 120
