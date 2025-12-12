@@ -129,6 +129,11 @@ jobs:
         run: |
           python -m pytest tests/unit --cov=app --cov-report=xml:coverage.xml
 
+      - name: Debug coverage.xml exists
+        run: |
+          ls -la
+          ls -la coverage.xml
+
       # Upload analysis to SonarCloud (requires SONAR_TOKEN secret).
       - name: SonarCloud scan
         uses: SonarSource/sonarqube-scan-action@v7
