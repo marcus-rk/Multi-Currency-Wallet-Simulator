@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from decimal import Decimal
 
@@ -41,6 +41,18 @@ def get_wallet(wallet_id: str) -> Optional[Wallet]:
     row = cur.fetchone()
     return _row_to_wallet(row) if row else None
 
+
+def get_all_wallets() -> List[Wallet]:
+    """Fetch all wallets."""
+    db = get_db()
+    cur = db.execute(
+        """
+        SELECT id, currency, balance, status, created_at, updated_at
+        FROM wallets
+        """
+    )
+    rows = cur.fetchall()
+    return [_row_to_wallet(row) for row in rows]
 
 
 def update_wallet(wallet: Wallet) -> None:

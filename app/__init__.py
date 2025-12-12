@@ -34,6 +34,9 @@ def create_app(test_config: dict = None) -> Flask:
 
     # --- Blueprint registration ---
     from .routes.health import health_bp
+    from .routes.wallets import wallets_bp
+    
     app.register_blueprint(health_bp)
+    app.register_blueprint(wallets_bp)
 
     return app

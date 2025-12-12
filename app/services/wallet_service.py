@@ -1,22 +1,27 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Tuple
+from typing import Tuple, List, Optional
 from uuid import uuid4
 
 from app.domain.enums import Currency, WalletStatus
 from app.domain.models.Wallet import Wallet
 from app.domain.models.Transaction import Transaction
+from app.domain.exceptions import WalletNotFoundError
 from app.domain.rules import (
     apply_deposit,
     apply_withdraw,
     apply_exchange,
 )
 from app.repository.wallets_repo import (
-    get_wallet, 
+    get_wallet as repo_get_wallet, 
+    get_all_wallets as repo_get_all_wallets,
     update_wallet, 
     create_wallet as repo_create_wallet
 )
-from app.repository.transactions_repo import create_transaction
+from app.repository.transactions_repo import (
+    create_transaction,
+    get_transactions_for_wallet as repo_get_transactions
+)
 from .exchange_service import get_exchange_rate
 
 
@@ -33,6 +38,23 @@ def create_wallet(currency: Currency, initial_balance: Decimal = Decimal("0.00")
 
     repo_create_wallet(wallet)
     return wallet
+
+
+def get_wallet(wallet_id: str) -> Wallet:
+    """Get a wallet by ID or raise WalletNotFoundError."""
+    return _get_wallet_or_fail(wallet_id)
+
+
+def list_wallets() -> List[Wallet]:
+    """List all wallets."""
+    return repo_get_all_wallets()
+
+
+def list_transactions(wallet_id: str) -> List[Transaction]:
+    """List all transactions for a specific wallet."""
+    # Ensure wallet exists first
+    _get_wallet_or_fail(wallet_id)
+    return repo_get_transactions(wallet_id)
 
 
 def deposit_money(
@@ -134,7 +156,7 @@ def _get_wallet_or_fail(wallet_id: str) -> Wallet:
     """
     Helper to load a wallet or raise a service-level error.
     """
-    wallet = get_wallet(wallet_id)
+    wallet = repo_get_wallet(wallet_id)
     if wallet is None:
-        raise ValueError(f"Wallet {wallet_id} not found")
+        raise WalletNotFoundError(f"Wallet {wallet_id} not found")
     return wallet
