@@ -2,6 +2,7 @@
 from datetime import datetime
 from decimal import Decimal
 from typing import Callable, Optional
+from uuid import uuid4
 import pytest
 from app.domain.models.Wallet import Wallet
 from app.domain.enums import Currency, WalletStatus
@@ -37,13 +38,14 @@ def wallet_factory(get_fixed_timestamp: datetime) -> Callable[..., Wallet]:
     """
     def _create(
         *, # Enforce keyword arguments
-        wallet_id: str = "wallet-1",
+        wallet_id: str | None = None,
         balance: Decimal = Decimal("100.00"),
         currency: Currency = Currency.DKK,
         status: WalletStatus = WalletStatus.ACTIVE,
         created_at: Optional[datetime] = None,
         updated_at: Optional[datetime] = None,
     ) -> Wallet:
+        wallet_id = wallet_id or f"wallet-{uuid4()}"
         created = created_at or get_fixed_timestamp
         updated = updated_at or created
 

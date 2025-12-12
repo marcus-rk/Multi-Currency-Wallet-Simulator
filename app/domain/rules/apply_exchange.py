@@ -91,7 +91,7 @@ def _validate_exchange(
     if amount <= Decimal("0"):
         return TransactionErrorCode.INVALID_AMOUNT
 
-    if source_wallet.currency is target_wallet.currency:
+    if source_wallet.currency == target_wallet.currency:
         return TransactionErrorCode.UNSUPPORTED_CURRENCY
 
     if amount > source_wallet.balance:

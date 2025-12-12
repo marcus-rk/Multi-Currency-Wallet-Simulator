@@ -55,4 +55,6 @@ def get_exchange_rate(
         rate_str = str(data["rates"][target.value])
         return Decimal(rate_str)
     except (KeyError, TypeError, ValueError) as exc:
-        raise RuntimeError(f"Unexpected exchange API response: {data}") from exc
+        raise ExchangeRateServiceError(
+            f"Unexpected exchange API response: {data}"
+        ) from exc
