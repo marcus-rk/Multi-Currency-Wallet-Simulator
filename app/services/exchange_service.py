@@ -6,6 +6,7 @@ from flask import current_app
 import requests
 
 from app.domain.enums import Currency
+from app.domain.exceptions import ExchangeRateServiceError
 
 # Documentation URL Frankfurter API: https://frankfurter.dev
 
@@ -47,7 +48,7 @@ def get_exchange_rate(
         response.raise_for_status()
         data = response.json()
     except requests.RequestException as exc:
-        raise RuntimeError(f"Failed to fetch exchange rate: {exc}") from exc
+        raise ExchangeRateServiceError(f"Failed to fetch exchange rate: {exc}") from exc
 
     # Extract rate from response data
     try:

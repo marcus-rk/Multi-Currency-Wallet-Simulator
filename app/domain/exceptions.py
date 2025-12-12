@@ -17,3 +17,7 @@ class InsufficientFundsError(Exception):
 class WalletStateError(Exception):
     """Raised when a wallet is in an invalid state (e.g. CLOSED or FROZEN)."""
     pass
+
+class ExchangeRateServiceError(Exception):
+    """Raised when the external exchange rate service fails."""
+    pass

@@ -85,6 +85,9 @@ def _validate_exchange(
     if not source_wallet.is_active() or not target_wallet.is_active():
         return TransactionErrorCode.INVALID_WALLET_STATE
 
+    if source_wallet.id == target_wallet.id:
+        return TransactionErrorCode.INVALID_WALLET_STATE
+
     if amount <= Decimal("0"):
         return TransactionErrorCode.INVALID_AMOUNT
 
