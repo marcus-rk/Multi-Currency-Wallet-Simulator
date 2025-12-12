@@ -1,2 +1,2 @@
 # placeholder file for integration tests for
-# the SQL database and (maybe stubbed external APIs)
+# the flask app, SQL database and (stubbed external APIs)
