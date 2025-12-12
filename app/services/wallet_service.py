@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Tuple, List, Optional
+from typing import Tuple, List
 from uuid import uuid4
 
 from app.domain.enums import Currency, WalletStatus
