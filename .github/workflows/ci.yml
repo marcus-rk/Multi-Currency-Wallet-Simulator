@@ -1,8 +1,12 @@
 name: CI
 
-# Trigger on push and PR to main to ensure:
-# 1. Every proposed change is verified before merging (PR).
-# 2. The main branch remains in a deployable state (Push).
+# Pipeline runs in parallel:
+# - Linting (static code quality)
+# - Unit tests (domain/business rules)
+# - Integration tests (HTTP -> services -> repos -> SQLite)
+#
+# Triggers on push and PR to main, so changes are verified before merge
+# and main stays green after merges.
 on:
   push:
     branches: [ "main" ]
@@ -10,46 +14,86 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
-    name: Lint & Test
-    # Ubuntu is the most cost-effective and standard runner for Linux-based Python apps.
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
 
     steps:
-      # We need to check out the code to the runner to access the source files.
+      # Pull repository contents into the runner.
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Setting up a specific Python version ensures consistency between dev and CI.
-      # 'cache: pip' significantly speeds up runs by reusing downloaded packages
-      # between builds, reducing network time and load.
+      # Use a consistent Python version (and enable pip caching).
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: 'pip'
 
-      # Install dependencies to replicate the production/dev environment.
-      # Pylint is installed explicitly here to ensure the linter is available
-      # even if it's not in requirements.txt (though adding it there is also valid).
+      # Install project deps + the lint tool.
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install pylint
+          python -m pip install pylint
 
-      # We run linting to catch code quality issues and enforce style standards.
-      # Using --fail-under=8.0 sets a quality gate:
-      # - It blocks code that is significantly messy or buggy.
-      # - It allows for some minor style deviations (score < 10) to avoid
-      #   frustrating developers with perfectionism during rapid development.
+      # Static analysis for code quality.
       - name: Lint with Pylint
         run: |
-          pylint app --fail-under=8.0
+          python -m pylint app --fail-under=8.0
 
-      # We run the unit tests to verify that the core business logic (Domain layer)
-      # behaves as expected. This ensures that new changes do not break
-      # existing functionality defined by our Black-Box test design.
-      - name: Run Unit Tests
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # Pull repository contents into the runner.
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Use a consistent Python version (and enable pip caching).
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: 'pip'
+
+      # Install project deps + test runner.
+      - name: Install dependencies
         run: |
-          pytest tests/unit
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          python -m pip install pytest pytest-cov
+
+      # Fast feedback on domain/service logic.
+      - name: Run unit tests (with coverage)
+        run: |
+          python -m pytest tests/unit --cov=app --cov-report=term-missing
+
+  integration-tests:
+    name: Integration tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # Pull repository contents into the runner.
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Use a consistent Python version (and enable pip caching).
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: 'pip'
+
+      # Install project deps + test runner.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          python -m pip install pytest pytest-cov
+
+      # Vertical-slice checks (HTTP -> services -> repos -> SQLite).
+      - name: Run integration tests
+        run: |
+          python -m pytest -m integration
