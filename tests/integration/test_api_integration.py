@@ -4,37 +4,18 @@ from decimal import Decimal
 
 import pytest
 
-from app.domain.enums import TransactionStatus, TransactionType, Currency
-from app.repository.wallets_repo import get_wallet
+from app.domain.enums import Currency, TransactionStatus, TransactionType
 from app.repository.transactions_repo import get_transactions_for_wallet
+from app.repository.wallets_repo import get_wallet
+from tests.integration.helpers import create_wallet, deposit, exchange, withdraw
 
 
-def _create_wallet(client, currency: str = "DKK") -> str:
-    response = client.post("/api/wallets", json={"currency": currency})
-    assert response.status_code == 201
-    wallet_payload = response.get_json()
-    assert isinstance(wallet_payload, dict)
-    assert "id" in wallet_payload
-    return wallet_payload["id"]
-
-
-def _deposit(client, wallet_id: str, amount: str, currency: str):
-    return client.post(
-        f"/api/wallets/{wallet_id}/deposit",
-        json={"amount": amount, "currency": currency},
-    )
-
-
-def _withdraw(client, wallet_id: str, amount: str, currency: str):
-    return client.post(
-        f"/api/wallets/{wallet_id}/withdraw",
-        json={"amount": amount, "currency": currency},
-    )
+# --- Wallet endpoints ---
 
 
 @pytest.mark.integration
 def test_create_wallet_persists_row(client, app_instance):
-    wallet_id = _create_wallet(client, "DKK")
+    wallet_id = create_wallet(client, "DKK")
 
     with app_instance.app_context():
         wallet = get_wallet(wallet_id)
@@ -45,7 +26,7 @@ def test_create_wallet_persists_row(client, app_instance):
 
 @pytest.mark.integration
 def test_list_wallets_includes_created_wallet(client):
-    created_wallet_id = _create_wallet(client, "EUR")
+    created_wallet_id = create_wallet(client, "EUR")
 
     response = client.get("/api/wallets")
     assert response.status_code == 200
@@ -56,19 +37,22 @@ def test_list_wallets_includes_created_wallet(client):
     assert created_wallet_id in returned_ids
 
 
+# --- Deposit / Withdraw ---
+
+
 @pytest.mark.integration
 def test_deposit_success_persists_wallet_and_transaction(client, app_instance):
-    wallet_id = _create_wallet(client, "DKK")
+    wallet_id = create_wallet(client, "DKK")
 
-    response = _deposit(client, wallet_id, "10.00", "DKK")
+    response = deposit(client, wallet_id, "10.00", "DKK")
     assert response.status_code == 200
     body = response.get_json()
     assert isinstance(body, dict)
 
     assert body["wallet"]["id"] == wallet_id
     assert body["wallet"]["balance"] == "10.00"
-    assert body["transaction"]["type"] == "DEPOSIT"
-    assert body["transaction"]["status"] == "COMPLETED"
+    assert body["transaction"]["type"] == TransactionType.DEPOSIT.value
+    assert body["transaction"]["status"] == TransactionStatus.COMPLETED.value
     assert body["transaction"]["error_code"] is None
 
     with app_instance.app_context():
@@ -82,14 +66,14 @@ def test_deposit_success_persists_wallet_and_transaction(client, app_instance):
 
 @pytest.mark.integration
 def test_withdraw_insufficient_funds_records_failed_transaction(client, app_instance):
-    wallet_id = _create_wallet(client, "DKK")
+    wallet_id = create_wallet(client, "DKK")
 
-    response = _withdraw(client, wallet_id, "1.00", "DKK")
+    response = withdraw(client, wallet_id, "1.00", "DKK")
     assert response.status_code == 422
     body = response.get_json()
     assert isinstance(body, dict)
 
-    assert body["transaction"]["status"] == "FAILED"
+    assert body["transaction"]["status"] == TransactionStatus.FAILED.value
     assert body["transaction"]["error_code"] == "INSUFFICIENT_FUNDS"
 
     with app_instance.app_context():
@@ -102,29 +86,27 @@ def test_withdraw_insufficient_funds_records_failed_transaction(client, app_inst
         assert transactions[0].error_code.value == "INSUFFICIENT_FUNDS"
 
 
+# --- Exchange ---
+
+
 @pytest.mark.integration
 def test_exchange_success_updates_both_wallets(client, app_instance, fx_rate_stub):
-    source_wallet_id = _create_wallet(client, "DKK")
-    target_wallet_id = _create_wallet(client, "USD")
+    """Verify end-to-end exchange wiring updates balances and records an exchange tx."""
 
-    _deposit(client, source_wallet_id, "100.00", "DKK")
+    source_wallet_id = create_wallet(client, "DKK")
+    target_wallet_id = create_wallet(client, "USD")
 
-    response = client.post(
-        "/api/wallets/exchange",
-        json={
-            "source_wallet_id": source_wallet_id,
-            "target_wallet_id": target_wallet_id,
-            "amount": "10.00",
-        },
-    )
+    deposit(client, source_wallet_id, "100.00", "DKK")
+
+    response = exchange(client, source_wallet_id, target_wallet_id, "10.00")
     assert response.status_code == 200
     body = response.get_json()
     assert isinstance(body, dict)
 
     assert body["source_wallet"]["balance"] == "90.00"
     assert Decimal(body["target_wallet"]["balance"]) == Decimal("20.00")
-    assert body["transaction"]["type"] == "EXCHANGE"
-    assert body["transaction"]["status"] == "COMPLETED"
+    assert body["transaction"]["type"] == TransactionType.EXCHANGE.value
+    assert body["transaction"]["status"] == TransactionStatus.COMPLETED.value
 
     with app_instance.app_context():
         persisted_source = get_wallet(source_wallet_id)
@@ -135,37 +117,59 @@ def test_exchange_success_updates_both_wallets(client, app_instance, fx_rate_stu
         source_transactions = get_transactions_for_wallet(source_wallet_id)
         assert len(source_transactions) == 2  # deposit + exchange
 
-        latest_transaction = source_transactions[0]
-        assert latest_transaction.type == TransactionType.EXCHANGE
-        assert latest_transaction.status == TransactionStatus.COMPLETED
-        assert latest_transaction.error_code is None
-        assert latest_transaction.source_wallet_id == source_wallet_id
-        assert latest_transaction.target_wallet_id == target_wallet_id
-        assert latest_transaction.amount == Decimal("10.00")
-        assert latest_transaction.currency == Currency.DKK
-        assert latest_transaction.credited_amount == Decimal("20.00")
-        assert latest_transaction.credited_currency == Currency.USD
-        assert latest_transaction.source_balance_after == Decimal("90.00")
-        assert latest_transaction.target_balance_after == Decimal("20.00")
+        exchange_transactions = [
+            tx for tx in source_transactions if tx.type == TransactionType.EXCHANGE
+        ]
+        assert len(exchange_transactions) == 1
+
+
+@pytest.mark.integration
+def test_exchange_success_persists_expected_transaction_fields(
+    client, app_instance, fx_rate_stub
+):
+    """Verify persisted exchange tx contains core accounting fields."""
+
+    source_wallet_id = create_wallet(client, "DKK")
+    target_wallet_id = create_wallet(client, "USD")
+
+    deposit(client, source_wallet_id, "100.00", "DKK")
+
+    response = exchange(client, source_wallet_id, target_wallet_id, "10.00")
+    assert response.status_code == 200
+
+    with app_instance.app_context():
+        source_transactions = get_transactions_for_wallet(source_wallet_id)
+        assert len(source_transactions) == 2  # deposit + exchange
+        exchange_transactions = [
+            tx for tx in source_transactions if tx.type == TransactionType.EXCHANGE
+        ]
+        assert len(exchange_transactions) == 1
+
+        exchange_tx = exchange_transactions[0]
+        assert exchange_tx.status == TransactionStatus.COMPLETED
+        assert exchange_tx.error_code is None
+        assert exchange_tx.source_wallet_id == source_wallet_id
+        assert exchange_tx.target_wallet_id == target_wallet_id
+        assert exchange_tx.amount == Decimal("10.00")
+        assert exchange_tx.currency == Currency.DKK
+        assert exchange_tx.credited_amount == Decimal("20.00")
+        assert exchange_tx.credited_currency == Currency.USD
+        assert exchange_tx.source_balance_after == Decimal("90.00")
+        assert exchange_tx.target_balance_after == Decimal("20.00")
 
 
 @pytest.mark.integration
 def test_exchange_fx_failure_returns_502_and_does_not_change_wallets(
     client, app_instance, fx_rate_fail_stub
 ):
-    source_wallet_id = _create_wallet(client, "DKK")
-    target_wallet_id = _create_wallet(client, "USD")
+    """External FX failure returns 502 and must not mutate balances."""
+    
+    source_wallet_id = create_wallet(client, "DKK")
+    target_wallet_id = create_wallet(client, "USD")
 
-    _deposit(client, source_wallet_id, "10.00", "DKK")
+    deposit(client, source_wallet_id, "10.00", "DKK")
 
-    response = client.post(
-        "/api/wallets/exchange",
-        json={
-            "source_wallet_id": source_wallet_id,
-            "target_wallet_id": target_wallet_id,
-            "amount": "5.00",
-        },
-    )
+    response = exchange(client, source_wallet_id, target_wallet_id, "5.00")
     assert response.status_code == 502
     body = response.get_json()
     assert isinstance(body, dict)
@@ -182,12 +186,15 @@ def test_exchange_fx_failure_returns_502_and_does_not_change_wallets(
         assert len(source_transactions) == 1
 
 
+# --- Transactions ---
+
+
 @pytest.mark.integration
 def test_list_transactions_returns_expected_items(client, app_instance):
-    wallet_id = _create_wallet(client, "DKK")
+    wallet_id = create_wallet(client, "DKK")
 
-    _deposit(client, wallet_id, "10.00", "DKK")
-    _withdraw(client, wallet_id, "2.00", "DKK")
+    deposit(client, wallet_id, "10.00", "DKK")
+    withdraw(client, wallet_id, "2.00", "DKK")
 
     response = client.get(f"/api/wallets/{wallet_id}/transactions")
     assert response.status_code == 200
@@ -195,4 +202,11 @@ def test_list_transactions_returns_expected_items(client, app_instance):
 
     assert isinstance(transactions_payload, list)
     assert len(transactions_payload) == 2
-    assert {tx["type"] for tx in transactions_payload} == {"DEPOSIT", "WITHDRAWAL"}
+    assert all(
+        isinstance(tx, dict) and "id" in tx and "status" in tx
+        for tx in transactions_payload
+    )
+    assert {tx["type"] for tx in transactions_payload} == {
+        TransactionType.DEPOSIT.value,
+        TransactionType.WITHDRAWAL.value,
+    }
