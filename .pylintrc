@@ -1,0 +1,19 @@
+'''Pylint configuration file'''
+
+[pylint]
+disable =
+    C0114, # missing-module-docstring
+    C0115, # missing-class-docstring
+    C0116, # missing-function-docstring
+    C0301, # line-too-long
+    C0413, # wrong-import-position
+    R0903, # too-few-public-methods
+    R0913, # too-many-arguments
+    R0917, # too-many-positional-arguments
+    R0801, # duplicate-code
+    C0103, # invalid-name (for module names like Wallet.py)
+    C0415, # import-outside-toplevel
+    W0511, # fixme (TODOs)
+
+[pylint.FORMAT]
+max-line-length = 120
