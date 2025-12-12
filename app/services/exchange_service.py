@@ -1,6 +1,6 @@
 # app/service/exchange_service.py
 
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Optional
 from flask import current_app
 import requests
@@ -54,7 +54,7 @@ def get_exchange_rate(
     try:
         rate_str = str(data["rates"][target.value])
         return Decimal(rate_str)
-    except (KeyError, TypeError, ValueError) as exc:
+    except (KeyError, TypeError, ValueError, InvalidOperation) as exc:
         raise ExchangeRateServiceError(
             f"Unexpected exchange API response: {data}"
         ) from exc
