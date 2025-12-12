@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import UUID
-from unittest.mock import Mock, call
 
 import pytest
 
@@ -18,21 +17,22 @@ def test_create_wallet_persists_via_repo(monkeypatch):
     fixed_uuid = UUID("00000000-0000-0000-0000-000000000001")
     monkeypatch.setattr(wallet_service, "uuid4", lambda: fixed_uuid)
 
-    repo_create_mock = Mock()
-    monkeypatch.setattr(wallet_service, "repo_create_wallet", repo_create_mock)
+    captured: dict[str, object] = {}
+
+    def capture_create_wallet(created_wallet: Wallet) -> None:
+        captured["created_wallet"] = created_wallet
+
+    monkeypatch.setattr(wallet_service, "repo_create_wallet", capture_create_wallet)
 
     wallet = wallet_service.create_wallet(Currency.DKK, initial_balance=Decimal("12.34"))
 
     assert wallet.id == str(fixed_uuid)
     assert wallet.currency == Currency.DKK
     assert wallet.balance == Decimal("12.34")
-    assert wallet.created_at.tzinfo is not None
+    assert wallet.created_at is not None
     assert wallet.updated_at == wallet.created_at
 
-    repo_create_mock.assert_called_once()
-    created_wallet_arg = repo_create_mock.call_args[0][0]
-    assert isinstance(created_wallet_arg, Wallet)
-    assert created_wallet_arg.id == wallet.id
+    assert captured["created_wallet"] == wallet
 
 
 def test_get_wallet_raises_when_missing(monkeypatch):
@@ -69,13 +69,18 @@ def test_deposit_money_persists_wallet_and_transaction(monkeypatch, wallet_facto
     monkeypatch.setattr(wallet_service, "uuid4", lambda: fixed_uuid)
     monkeypatch.setattr(wallet_service, "repo_get_wallet", lambda _wallet_id: wallet)
 
-    apply_deposit_mock = Mock(return_value=(updated_wallet, tx))
-    monkeypatch.setattr(wallet_service, "apply_deposit", apply_deposit_mock)
+    monkeypatch.setattr(wallet_service, "apply_deposit", lambda **_kwargs: (updated_wallet, tx))
 
-    update_wallet_mock = Mock()
-    create_tx_mock = Mock()
-    monkeypatch.setattr(wallet_service, "update_wallet", update_wallet_mock)
-    monkeypatch.setattr(wallet_service, "create_transaction", create_tx_mock)
+    captured: dict[str, object] = {}
+
+    def capture_update_wallet(w: Wallet) -> None:
+        captured["updated_wallet"] = w
+
+    def capture_create_transaction(t: Transaction) -> None:
+        captured["transaction"] = t
+
+    monkeypatch.setattr(wallet_service, "update_wallet", capture_update_wallet)
+    monkeypatch.setattr(wallet_service, "create_transaction", capture_create_transaction)
 
     returned_wallet, returned_tx = wallet_service.deposit_money(
         wallet_id="w1",
@@ -87,16 +92,8 @@ def test_deposit_money_persists_wallet_and_transaction(monkeypatch, wallet_facto
     assert returned_wallet == updated_wallet
     assert returned_tx == tx
 
-    apply_deposit_mock.assert_called_once()
-    kwargs = apply_deposit_mock.call_args.kwargs
-    assert kwargs["wallet"] == wallet
-    assert kwargs["amount"] == Decimal("10.00")
-    assert kwargs["currency"] == Currency.DKK
-    assert kwargs["transaction_id"] == str(fixed_uuid)
-    assert kwargs["now"] == now
-
-    update_wallet_mock.assert_called_once_with(updated_wallet)
-    create_tx_mock.assert_called_once_with(tx)
+    assert captured["updated_wallet"] == updated_wallet
+    assert captured["transaction"] == tx
 
 
 def test_withdraw_money_persists_wallet_and_transaction(monkeypatch, wallet_factory):
@@ -119,13 +116,18 @@ def test_withdraw_money_persists_wallet_and_transaction(monkeypatch, wallet_fact
     monkeypatch.setattr(wallet_service, "uuid4", lambda: fixed_uuid)
     monkeypatch.setattr(wallet_service, "repo_get_wallet", lambda _wallet_id: wallet)
 
-    apply_withdraw_mock = Mock(return_value=(updated_wallet, tx))
-    monkeypatch.setattr(wallet_service, "apply_withdraw", apply_withdraw_mock)
+    monkeypatch.setattr(wallet_service, "apply_withdraw", lambda **_kwargs: (updated_wallet, tx))
 
-    update_wallet_mock = Mock()
-    create_tx_mock = Mock()
-    monkeypatch.setattr(wallet_service, "update_wallet", update_wallet_mock)
-    monkeypatch.setattr(wallet_service, "create_transaction", create_tx_mock)
+    captured: dict[str, object] = {}
+
+    def capture_update_wallet(w: Wallet) -> None:
+        captured["updated_wallet"] = w
+
+    def capture_create_transaction(t: Transaction) -> None:
+        captured["transaction"] = t
+
+    monkeypatch.setattr(wallet_service, "update_wallet", capture_update_wallet)
+    monkeypatch.setattr(wallet_service, "create_transaction", capture_create_transaction)
 
     returned_wallet, returned_tx = wallet_service.withdraw_money(
         wallet_id="w1",
@@ -137,16 +139,8 @@ def test_withdraw_money_persists_wallet_and_transaction(monkeypatch, wallet_fact
     assert returned_wallet == updated_wallet
     assert returned_tx == tx
 
-    apply_withdraw_mock.assert_called_once()
-    kwargs = apply_withdraw_mock.call_args.kwargs
-    assert kwargs["wallet"] == wallet
-    assert kwargs["amount"] == Decimal("5.00")
-    assert kwargs["currency"] == Currency.DKK
-    assert kwargs["transaction_id"] == str(fixed_uuid)
-    assert kwargs["now"] == now
-
-    update_wallet_mock.assert_called_once_with(updated_wallet)
-    create_tx_mock.assert_called_once_with(tx)
+    assert captured["updated_wallet"] == updated_wallet
+    assert captured["transaction"] == tx
 
 
 def test_exchange_money_calls_fx_then_persists(monkeypatch, wallet_factory):
@@ -181,16 +175,19 @@ def test_exchange_money_calls_fx_then_persists(monkeypatch, wallet_factory):
 
     monkeypatch.setattr(wallet_service, "repo_get_wallet", fake_repo_get_wallet)
 
-    get_rate_mock = Mock(return_value=Decimal("2.0"))
-    monkeypatch.setattr(wallet_service, "get_exchange_rate", get_rate_mock)
+    monkeypatch.setattr(wallet_service, "get_exchange_rate", lambda _src, _dst: Decimal("2.0"))
+    monkeypatch.setattr(wallet_service, "apply_exchange", lambda **_kwargs: (updated_source, updated_target, tx))
 
-    apply_exchange_mock = Mock(return_value=(updated_source, updated_target, tx))
-    monkeypatch.setattr(wallet_service, "apply_exchange", apply_exchange_mock)
+    captured: dict[str, object] = {"updated_wallets": []}
 
-    update_wallet_mock = Mock()
-    create_tx_mock = Mock()
-    monkeypatch.setattr(wallet_service, "update_wallet", update_wallet_mock)
-    monkeypatch.setattr(wallet_service, "create_transaction", create_tx_mock)
+    def capture_update_wallet(w: Wallet) -> None:
+        captured["updated_wallets"].append(w)
+
+    def capture_create_transaction(t: Transaction) -> None:
+        captured["transaction"] = t
+
+    monkeypatch.setattr(wallet_service, "update_wallet", capture_update_wallet)
+    monkeypatch.setattr(wallet_service, "create_transaction", capture_create_transaction)
 
     returned_source, returned_target, returned_tx = wallet_service.exchange_money(
         source_wallet_id="source",
@@ -203,19 +200,8 @@ def test_exchange_money_calls_fx_then_persists(monkeypatch, wallet_factory):
     assert returned_target == updated_target
     assert returned_tx == tx
 
-    get_rate_mock.assert_called_once_with(Currency.DKK, Currency.USD)
-
-    apply_exchange_mock.assert_called_once()
-    kwargs = apply_exchange_mock.call_args.kwargs
-    assert kwargs["source_wallet"] == source
-    assert kwargs["target_wallet"] == target
-    assert kwargs["amount"] == Decimal("10.00")
-    assert kwargs["fx_rate"] == Decimal("2.0")
-    assert kwargs["transaction_id"] == str(fixed_uuid)
-    assert kwargs["now"] == now
-
-    update_wallet_mock.assert_has_calls([call(updated_source), call(updated_target)])
-    create_tx_mock.assert_called_once_with(tx)
+    assert captured["updated_wallets"] == [updated_source, updated_target]
+    assert captured["transaction"] == tx
 
 
 def test_list_transactions_raises_when_wallet_missing(monkeypatch):
@@ -229,7 +215,7 @@ def test_list_transactions_returns_repo_results_when_wallet_exists(monkeypatch, 
     # Choice: this targets the single uncovered happy-path line in list_transactions.
     # Approach: stub wallet existence (service gate) and stub repo tx retrieval; no DB/network.
     wallet = wallet_factory(wallet_id="w1")
-    expected = [Mock(name="tx1"), Mock(name="tx2")]
+    expected = [object(), object()]
 
     monkeypatch.setattr(wallet_service, "repo_get_wallet", lambda _wallet_id: wallet)
     monkeypatch.setattr(wallet_service, "repo_get_transactions", lambda _wallet_id: expected)

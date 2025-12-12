@@ -1,4 +1,4 @@
-# app/service/exchange_service.py
+# app/services/exchange_service.py
 
 from decimal import Decimal, InvalidOperation
 from typing import Optional
@@ -20,7 +20,7 @@ def get_exchange_rate(
 ) -> Decimal:
     """
     Get the exchange rate from source currency to target currency.
-    
+
     **Returns:**
     - If explicit_rate is provided, just return it.
     - If source and target are the same, return 1.0.
@@ -43,7 +43,7 @@ def get_exchange_rate(
                 "base": source.value,     # e.g "DKK"
                 "symbols": target.value,  # e.g "USD"
             },
-            timeout=5, # seconds
+            timeout=5,  # seconds
         )
         response.raise_for_status()
         data = response.json()
