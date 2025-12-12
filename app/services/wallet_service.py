@@ -26,7 +26,7 @@ from .exchange_service import get_exchange_rate
 
 
 def create_wallet(currency: Currency, initial_balance: Decimal = Decimal("0.00")) -> Wallet:
-    now = datetime.utcnow()
+    now = datetime.now()
     wallet = Wallet(
         id=str(uuid4()), # new UUID for the wallet
         currency=currency,
@@ -94,7 +94,7 @@ def withdraw_money(
     High-level withdrawal operation:
       - Return (updated_wallet, transaction)
     """
-    now = now or datetime.utcnow()
+    now = now or datetime.now()
     wallet = _get_wallet_or_fail(wallet_id)
 
     updated_wallet, transaction = apply_withdraw(
@@ -125,7 +125,7 @@ def exchange_money(
       - Persist both wallets + transaction
       - Return (updated_source_wallet, updated_target_wallet, transaction)
     """
-    now = now or datetime.utcnow()
+    now = now or datetime.now()
 
     source_wallet = _get_wallet_or_fail(source_wallet_id)
     target_wallet = _get_wallet_or_fail(target_wallet_id)
