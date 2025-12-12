@@ -34,7 +34,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
           python -m pip install pylint
 
       # Static analysis for code quality.
@@ -62,7 +62,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
           python -m pip install pytest pytest-cov
 
       # Fast feedback on domain/service logic.
@@ -90,10 +90,48 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
           python -m pip install pytest pytest-cov
 
       # Vertical-slice checks (HTTP -> services -> repos -> SQLite).
       - name: Run integration tests
         run: |
           python -m pytest -m integration
+
+  sonarcloud:
+    name: SonarCloud
+    needs: [lint, unit-tests, integration-tests]
+    runs-on: ubuntu-latest
+
+    steps:
+      # Pull repository contents into the runner (full history helps blame/PR analysis).
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Use a consistent Python version (and enable pip caching).
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: 'pip'
+
+      # Install project deps + test runner for generating coverage.xml.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+          python -m pip install pytest pytest-cov
+
+      # Generate a Cobertura XML report for SonarCloud to import.
+      - name: Run unit tests (coverage.xml)
+        run: |
+          python -m pytest tests/unit --cov=app --cov-report=xml:coverage.xml
+
+      # Upload analysis to SonarCloud (requires SONAR_TOKEN secret).
+      - name: SonarCloud scan
+        uses: SonarSource/sonarqube-scan-action@v7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
