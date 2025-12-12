@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Tuple, List
 from uuid import uuid4
@@ -26,7 +26,7 @@ from .exchange_service import get_exchange_rate
 
 
 def create_wallet(currency: Currency, initial_balance: Decimal = Decimal("0.00")) -> Wallet:
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     wallet = Wallet(
         id=str(uuid4()), # new UUID for the wallet
         currency=currency,
@@ -67,7 +67,7 @@ def deposit_money(
     High-level deposit operation:
       - Return (updated_wallet, transaction)
     """
-    now = now or datetime.utcnow()
+    now = now or datetime.now(timezone.utc)
     wallet = _get_wallet_or_fail(wallet_id)
 
     updated_wallet, transaction = apply_deposit(
@@ -94,7 +94,7 @@ def withdraw_money(
     High-level withdrawal operation:
       - Return (updated_wallet, transaction)
     """
-    now = now or datetime.now()
+    now = now or datetime.now(timezone.utc)
     wallet = _get_wallet_or_fail(wallet_id)
 
     updated_wallet, transaction = apply_withdraw(
@@ -125,7 +125,7 @@ def exchange_money(
       - Persist both wallets + transaction
       - Return (updated_source_wallet, updated_target_wallet, transaction)
     """
-    now = now or datetime.now()
+    now = now or datetime.now(timezone.utc)
 
     source_wallet = _get_wallet_or_fail(source_wallet_id)
     target_wallet = _get_wallet_or_fail(target_wallet_id)

@@ -58,6 +58,56 @@ pip install --upgrade pip
 
 ---
 
+## Testing
+
+Run all tests:
+
+```bash
+pytest
+```
+
+Run all tests with coverage:
+
+```bash
+pytest --cov=app --cov-report=term-missing
+```
+
+Generate HTML coverage report:
+
+```bash
+pytest --cov=app --cov-report=html
+```
+
+---
+
+Run unit tests only (fast):
+
+```bash
+pytest tests/unit
+```
+
+Run unit tests with coverage:
+
+```bash
+pytest tests/unit --cov=app --cov-report=term-missing
+```
+
+---
+
+Run integration tests only (full stack, FX stubbed):
+
+```bash
+pytest -m integration
+```
+
+Run integration tests with coverage:
+
+```bash
+pytest -m integration --cov=app --cov-report=term-missing
+```
+
+---
+
 ## 👥 Author
 
 - **Marcus R. Kjærsgaard**  
