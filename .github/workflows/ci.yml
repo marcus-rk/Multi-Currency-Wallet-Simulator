@@ -1,0 +1,55 @@
+name: CI
+
+# Trigger on push and PR to main to ensure:
+# 1. Every proposed change is verified before merging (PR).
+# 2. The main branch remains in a deployable state (Push).
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Lint & Test
+    # Ubuntu is the most cost-effective and standard runner for Linux-based Python apps.
+    runs-on: ubuntu-latest
+
+    steps:
+      # We need to check out the code to the runner to access the source files.
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Setting up a specific Python version ensures consistency between dev and CI.
+      # 'cache: pip' significantly speeds up runs by reusing downloaded packages
+      # between builds, reducing network time and load.
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: 'pip'
+
+      # Install dependencies to replicate the production/dev environment.
+      # Pylint is installed explicitly here to ensure the linter is available
+      # even if it's not in requirements.txt (though adding it there is also valid).
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pylint
+
+      # We run linting to catch code quality issues and enforce style standards.
+      # Using --fail-under=8.0 sets a quality gate:
+      # - It blocks code that is significantly messy or buggy.
+      # - It allows for some minor style deviations (score < 10) to avoid
+      #   frustrating developers with perfectionism during rapid development.
+      - name: Lint with Pylint
+        run: |
+          pylint app --fail-under=8.0
+
+      # We run the unit tests to verify that the core business logic (Domain layer)
+      # behaves as expected. This ensures that new changes do not break
+      # existing functionality defined by our Black-Box test design.
+      - name: Run Unit Tests
+        run: |
+          pytest tests/unit
