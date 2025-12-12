@@ -9,7 +9,6 @@ from app.domain.enums import Currency
 
 # Documentation URL Frankfurter API: https://frankfurter.dev
 
-EXCHANGE_API_URL: str = current_app.config["EXCHANGE_API_URL"]
 SAME_CURRENCY_RATE: Decimal = Decimal("1.0")
 
 
@@ -36,8 +35,9 @@ def get_exchange_rate(
 
     # Call external exchange rate API
     try:
+        api_url = current_app.config["EXCHANGE_API_URL"]
         response = requests.get(
-            f"{EXCHANGE_API_URL}/latest",
+            f"{api_url}/latest",
             params={
                 "base": source.value,     # e.g "DKK"
                 "symbols": target.value,  # e.g "USD"

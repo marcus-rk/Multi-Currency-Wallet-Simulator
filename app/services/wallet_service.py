@@ -14,7 +14,7 @@ from app.domain.rules import (
 from app.repository.wallets_repo import (
     get_wallet, 
     update_wallet, 
-    create_wallet
+    create_wallet as repo_create_wallet
 )
 from app.repository.transactions_repo import create_transaction
 from .exchange_service import get_exchange_rate
@@ -31,7 +31,7 @@ def create_wallet(currency: Currency, initial_balance: Decimal = Decimal("0.00")
         updated_at=now,
     )
 
-    create_wallet(wallet)
+    repo_create_wallet(wallet)
     return wallet
 
 
@@ -118,7 +118,7 @@ def exchange_money(
         source_wallet=source_wallet,
         target_wallet=target_wallet,
         amount=amount,
-        exchange_rate=exchange_rate,  # make sure apply_exchange uses this name
+        fx_rate=exchange_rate,
         transaction_id=str(uuid4()),  # new UUID for the transaction
         now=now,
     )
