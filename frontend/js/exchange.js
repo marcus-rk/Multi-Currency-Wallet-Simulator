@@ -34,10 +34,12 @@ function populateWalletSelect(selectEl, wallets) {
 
 function walletStatusPill(status) {
   const s = String(status || "");
-  if (s === "ACTIVE") return `<span class=\"pill pill--success\">${escapeHtml(s)}</span>`;
-  if (s === "FROZEN") return `<span class=\"pill pill--frozen\">${escapeHtml(s)}</span>`;
-  if (s === "CLOSED") return `<span class=\"pill pill--closed\">${escapeHtml(s)}</span>`;
-  return `<span class=\"pill pill--neutral\">${escapeHtml(s)}</span>`;
+  const label = `Status: ${s || "UNKNOWN"}`;
+  const attrs = `aria-label=\"${escapeHtml(label)}\" title=\"${escapeHtml(label)}\"`;
+  if (s === "ACTIVE") return `<span class=\"pill pill--success\" ${attrs}>${escapeHtml(s)}</span>`;
+  if (s === "FROZEN") return `<span class=\"pill pill--frozen\" ${attrs}>${escapeHtml(s)}</span>`;
+  if (s === "CLOSED") return `<span class=\"pill pill--closed\" ${attrs}>${escapeHtml(s)}</span>`;
+  return `<span class=\"pill pill--neutral\" ${attrs}>${escapeHtml(s)}</span>`;
 }
 
 function txTypePill(type) {

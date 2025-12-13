@@ -8,19 +8,53 @@
  * - simple table rendering
  */
 
+const loadingTimers = new WeakMap();
+const LOADING_DELAY_MS = 150;
+
 export function setLoading(loadingEl, isLoading, text = "") {
   if (!loadingEl) return;
-  loadingEl.textContent = isLoading ? (text || "Loading...") : "";
+
+  const existingTimer = loadingTimers.get(loadingEl);
+  if (existingTimer) {
+    clearTimeout(existingTimer);
+    loadingTimers.delete(loadingEl);
+  }
+
+  if (!isLoading) {
+    loadingEl.textContent = "";
+    loadingEl.hidden = true;
+    return;
+  }
+
+  const message = text || "Loading...";
+
+  // Keep hidden until we decide to show it (prevents empty-line flicker).
+  loadingEl.textContent = "";
+  loadingEl.hidden = true;
+
+  // Avoid UI flicker on fast requests by only showing the text if loading
+  // lasts longer than a short threshold.
+  const timer = setTimeout(() => {
+    loadingEl.hidden = false;
+    loadingEl.textContent = message;
+    loadingTimers.delete(loadingEl);
+  }, LOADING_DELAY_MS);
+
+  loadingTimers.set(loadingEl, timer);
 }
 
 export function setStatus(statusEl, message) {
   if (!statusEl) return;
-  statusEl.textContent = message || "";
+  const text = message || "";
+  statusEl.textContent = text;
+  statusEl.hidden = text.trim() === "";
 }
 
 export function setError(errorEl, message) {
   if (!errorEl) return;
-  errorEl.textContent = message || "";
+  const text = message || "";
+  errorEl.textContent = text;
+  errorEl.hidden = text.trim() === "";
 }
 
 export function clearFeedback({ loadingEl, statusEl, errorEl }) {

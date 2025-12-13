@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 """UI-only helpers for Playwright E2E tests.
 
 These helpers encapsulate common UI flows (create wallet, open wallet, locate
@@ -19,6 +21,12 @@ def create_wallet_via_ui(page: Page, base_url: str, currency: str) -> str:
     """
 
     page.goto(f"{base_url}/")
+
+    # The index page triggers an initial refresh on load (GET /api/wallets).
+    # Wait for the wallet list container to get content so we don't snapshot an
+    # empty list and mis-diff later.
+    wallet_list_container = page.locator("#walletList")
+    expect(wallet_list_container).to_have_text(re.compile(r".*\S.*", re.DOTALL))
 
     wallet_links = page.locator("#walletList a")
     before_ids = set(wallet_links.all_inner_texts())

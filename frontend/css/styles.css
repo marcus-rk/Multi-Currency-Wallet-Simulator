@@ -1,8 +1,8 @@
 /*
-  Multi-Currency Wallet Simulator — Minimal Fintech Dashboard UI (SRS-aligned)
+  Multi-Currency Wallet Simulator — Minimal Fin-tech Dashboard UI (SRS-aligned)
 
   Design goals
-  - Lightweight, modern, accessible, Lighthouse-friendly
+  - Lightweight, modern, accessible
   - No external CSS libs, no font downloads
   - Mobile-first, responsive grid at >= 900px
   - Clear states: hover, focus-visible, disabled, success, error, warning
@@ -21,13 +21,15 @@
   --text-muted: #334155;
 
   /* Palette */
-  --bg: #f6f8fb;
+  --bg: #f5f7fb;
   --card: #ffffff;
   --border: #e2e8f0;
   --border-strong: #cbd5e1;
-  --accent: #2563eb;
-  --accent-soft: rgba(37, 99, 235, 0.08);
-  --accent-soft-hover: rgba(37, 99, 235, 0.12);
+  --accent: #1d4ed8;
+  --accent-rgb: 29, 78, 216;
+  --accent-ink: #1e3a8a;
+  --accent-soft: rgba(var(--accent-rgb), 0.08);
+  --accent-soft-hover: rgba(var(--accent-rgb), 0.12);
 
   --success: #166534;
   --success-bg: #dcfce7;
@@ -46,14 +48,17 @@
 
   /* Shadow */
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 10px 28px rgba(15, 23, 42, 0.08);
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 10px 24px rgba(15, 23, 42, 0.06);
 
   /* Focus */
-  --focus: 2px solid rgba(37, 99, 235, 0.95);
-  --focus-shadow: 0 0 0 4px rgba(37, 99, 235, 0.20);
+  --focus: 2px solid rgba(var(--accent-rgb), 0.95);
+  --focus-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.20);
 }
 
 * { box-sizing: border-box; }
+
+/* Always honor the HTML `hidden` attribute. */
+[hidden] { display: none !important; }
 
 html {
   font-size: 16px;
@@ -66,7 +71,7 @@ body {
   font-family: var(--font-sans);
   line-height: 1.55;
   color: var(--text);
-  background: radial-gradient(1000px circle at 20% -10%, rgba(37, 99, 235, 0.08), transparent 55%), var(--bg);
+  background: radial-gradient(1000px circle at 20% -10%, rgba(var(--accent-rgb), 0.10), transparent 55%), var(--bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -155,7 +160,7 @@ a:hover { text-decoration: underline; }
 
 .nav a[aria-current="page"] {
   background: var(--accent-soft);
-  border-color: rgba(37, 99, 235, 0.28);
+  border-color: rgba(var(--accent-rgb), 0.28);
   text-decoration: none;
 }
 
@@ -163,13 +168,19 @@ a:hover { text-decoration: underline; }
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-3);
+  align-items: start;
 }
 
 @media (min-width: 900px) {
   .grid { grid-template-columns: 1fr 1fr; }
 }
 
-.stack { display: grid; gap: var(--space-3); }
+.stack {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  align-items: start;
+}
 
 .card {
   background: var(--card);
@@ -184,7 +195,7 @@ a:hover { text-decoration: underline; }
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  background: rgba(15, 23, 42, 0.015);
+  background: rgba(var(--accent-rgb), 0.03);
   border-bottom: 1px solid var(--border);
 }
 
@@ -209,6 +220,20 @@ a:hover { text-decoration: underline; }
   transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
+.field select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 38px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(51, 65, 85, 0.90) 50%),
+    linear-gradient(135deg, rgba(51, 65, 85, 0.90) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 50%,
+    calc(100% - 13px) 50%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
 .field input:hover,
 .field select:hover {
   border-color: var(--border-strong);
@@ -230,10 +255,8 @@ a:hover { text-decoration: underline; }
   flex-wrap: wrap;
 }
 
-/* Reserve space so loading text doesn't push content down when toggled */
-#loading {
-  min-height: 1.55em;
-}
+/* Feedback blocks should not introduce layout gaps when empty. */
+#loading { margin: 0; }
 
 .mb-3 { margin-bottom: var(--space-3); }
 
@@ -252,39 +275,50 @@ a:hover { text-decoration: underline; }
   transition: background 120ms ease, border-color 120ms ease, filter 120ms ease, box-shadow 120ms ease;
 }
 
-.btn:hover {
-  border-color: rgba(37, 99, 235, 0.35);
-  background: rgba(37, 99, 235, 0.03);
+/* Avoid overriding primary button colors on hover */
+.btn:not(.btn--primary):hover {
+  border-color: rgba(var(--accent-rgb), 0.35);
+  background: rgba(var(--accent-rgb), 0.03);
 }
 
 .btn:active {
-  border-color: rgba(37, 99, 235, 0.45);
+  border-color: rgba(var(--accent-rgb), 0.45);
 }
 
 .btn--primary {
   background: var(--accent);
   border-color: var(--accent);
   color: #ffffff;
-  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.18);
+  box-shadow: 0 10px 22px rgba(var(--accent-rgb), 0.18);
 }
 
-.btn--primary:hover { filter: brightness(0.95); }
+.btn--primary:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+  filter: brightness(0.95);
+}
 
-.btn--primary:active { filter: brightness(0.90); }
+.btn--primary:active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+  filter: brightness(0.90);
+}
 
 .btn--secondary {
   background: var(--accent-soft);
-  border-color: rgba(37, 99, 235, 0.20);
+  border-color: rgba(var(--accent-rgb), 0.20);
 }
 
 .btn--secondary:hover {
   background: var(--accent-soft-hover);
-  border-color: rgba(37, 99, 235, 0.28);
+  border-color: rgba(var(--accent-rgb), 0.28);
 }
 
 .btn--secondary:active {
-  background: rgba(37, 99, 235, 0.16);
-  border-color: rgba(37, 99, 235, 0.35);
+  background: rgba(var(--accent-rgb), 0.16);
+  border-color: rgba(var(--accent-rgb), 0.35);
 }
 
 .btn:disabled {
@@ -305,7 +339,7 @@ a:hover { text-decoration: underline; }
 
 .pill--success { background: var(--success-bg); color: var(--success); border-color: rgba(22, 101, 52, 0.25); }
 .pill--warning { background: var(--warning-bg); color: var(--warning); border-color: rgba(146, 64, 14, 0.25); }
-.pill--frozen { background: rgba(37, 99, 235, 0.10); color: var(--accent); border-color: rgba(37, 99, 235, 0.25); }
+.pill--frozen { background: rgba(var(--accent-rgb), 0.14); color: var(--accent-ink); border-color: rgba(var(--accent-rgb), 0.30); }
 .pill--closed { background: rgba(15, 23, 42, 0.10); color: var(--text-muted); border-color: rgba(15, 23, 42, 0.22); }
 .pill--neutral { background: rgba(15, 23, 42, 0.04); color: var(--text); }
 .pill--error { background: var(--error-bg); color: var(--error); border-color: rgba(185, 28, 28, 0.25); }
@@ -314,20 +348,20 @@ a:hover { text-decoration: underline; }
   border-radius: var(--radius);
   border: 1px solid var(--border);
   padding: var(--space-2) var(--space-3);
+  margin: 0;
   background: rgba(15, 23, 42, 0.02);
   border-left: 4px solid rgba(15, 23, 42, 0.22);
   white-space: pre-wrap;
 }
 
 .banner--info {
-  background: rgba(37, 99, 235, 0.06);
-  border-left-color: rgba(37, 99, 235, 0.75);
+  background: rgba(var(--accent-rgb), 0.06);
+  border-left-color: rgba(var(--accent-rgb), 0.75);
 }
 .banner--success { background: var(--success-bg); border-left-color: rgba(22, 101, 52, 0.7); }
 .banner--error { background: var(--error-bg); border-left-color: rgba(185, 28, 28, 0.75); }
 .banner--warning { background: var(--warning-bg); border-left-color: rgba(146, 64, 14, 0.75); }
 
-.banner:empty { display: none; }
 
 .muted { color: var(--text-muted); }
 
@@ -348,12 +382,12 @@ a:hover { text-decoration: underline; }
 }
 
 .table thead th {
-  background: rgba(37, 99, 235, 0.06);
+  background: rgba(var(--accent-rgb), 0.06);
   font-weight: 700;
 }
 
 .table tbody tr:nth-child(even) { background: rgba(15, 23, 42, 0.02); }
-.table tbody tr:hover { background: rgba(37, 99, 235, 0.06); }
+.table tbody tr:hover { background: rgba(var(--accent-rgb), 0.06); }
 
 .kv {
   display: grid;
@@ -405,37 +439,37 @@ a:hover { text-decoration: underline; }
   font-weight: 700;
 }
 
-/* Wallet lifecycle buttons (semantic but still minimal) */
+/* Wallet lifecycle buttons */
 #freezeWallet {
-  background: rgba(37, 99, 235, 0.10);
-  border-color: rgba(37, 99, 235, 0.25);
+  background: rgba(var(--accent-rgb), 0.10);
+  border-color: rgba(var(--accent-rgb), 0.25);
   color: var(--text);
 }
 
 #freezeWallet:hover {
-  background: rgba(37, 99, 235, 0.14);
-  border-color: rgba(37, 99, 235, 0.32);
+  background: rgba(var(--accent-rgb), 0.14);
+  border-color: rgba(var(--accent-rgb), 0.32);
 }
 
 #freezeWallet:active {
-  background: rgba(37, 99, 235, 0.18);
-  border-color: rgba(37, 99, 235, 0.40);
+  background: rgba(var(--accent-rgb), 0.18);
+  border-color: rgba(var(--accent-rgb), 0.40);
 }
 
 #unfreezeWallet {
-  background: rgba(22, 101, 52, 0.10);
-  border-color: rgba(22, 101, 52, 0.22);
+  background: rgba(var(--accent-rgb), 0.08);
+  border-color: rgba(var(--accent-rgb), 0.22);
   color: var(--text);
 }
 
 #unfreezeWallet:hover {
-  background: rgba(22, 101, 52, 0.14);
-  border-color: rgba(22, 101, 52, 0.28);
+  background: rgba(var(--accent-rgb), 0.12);
+  border-color: rgba(var(--accent-rgb), 0.30);
 }
 
 #unfreezeWallet:active {
-  background: rgba(22, 101, 52, 0.18);
-  border-color: rgba(22, 101, 52, 0.35);
+  background: rgba(var(--accent-rgb), 0.16);
+  border-color: rgba(var(--accent-rgb), 0.38);
 }
 
 #closeWallet {
