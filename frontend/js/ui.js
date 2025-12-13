@@ -38,6 +38,30 @@ export function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+/**
+ * Format an ISO-8601 timestamp into a compact local datetime string.
+ * Example: 2025-12-13T16:59:05.379579+00:00 -> 2025-12-13 17:59 (depending on local timezone)
+ */
+export function formatDateTimeCompact(value) {
+  if (value === null || value === undefined) return "";
+  const raw = String(value).trim();
+  if (raw === "") return "";
+
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return raw;
+
+  const yyyy = d.getFullYear();
+  const mm = pad2(d.getMonth() + 1);
+  const dd = pad2(d.getDate());
+  const hh = pad2(d.getHours());
+  const min = pad2(d.getMinutes());
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+}
+
 function stripLeadingZeros(s) {
   const stripped = s.replace(/^0+(?=\d)/, "");
   return stripped === "" ? "0" : stripped;

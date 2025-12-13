@@ -7,7 +7,7 @@
  */
 
 import { fetchJson, formatError, ApiError } from "./api.js";
-import { clearFeedback, setError, setLoading, setStatus, escapeHtml, renderTable, formatDecimal } from "./ui.js";
+import { clearFeedback, setError, setLoading, setStatus, escapeHtml, renderTable, formatDecimal, formatDateTimeCompact } from "./ui.js";
 
 const els = {
   loading: document.getElementById("loading"),
@@ -82,7 +82,11 @@ function renderTransaction(tx) {
         },
       },
       { header: "Status", cell: (t) => txStatusPill(t.status) },
-      { header: "Time", cell: (t) => `<span class=\"mono\">${escapeHtml(t.created_at)}</span>` },
+      {
+        header: "Time",
+        cell: (t) =>
+          `<span class=\"mono\" title=\"${escapeHtml(t.created_at)}\">${escapeHtml(formatDateTimeCompact(t.created_at))}</span>`,
+      },
       { header: "Error", cell: (t) => (t.error_code ? `<code class=\"mono\">${escapeHtml(t.error_code)}</code>` : "") },
     ],
     rows,

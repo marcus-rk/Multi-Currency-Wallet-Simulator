@@ -13,7 +13,7 @@
 
 import { SUPPORTED_CURRENCIES } from "./config.js";
 import { fetchJson, formatError, ApiError } from "./api.js";
-import { clearFeedback, setError, setLoading, setStatus, escapeHtml, renderTable, formatDecimal } from "./ui.js";
+import { clearFeedback, setError, setLoading, setStatus, escapeHtml, renderTable, formatDecimal, formatDateTimeCompact } from "./ui.js";
 
 const uiElements = {
   loading: document.getElementById("loading"),
@@ -72,7 +72,7 @@ function renderWalletInfo(wallet) {
       <div class="kv__row"><dt>Currency</dt><dd>${escapeHtml(wallet.currency)}</dd></div>
       <div class="kv__row"><dt>Balance</dt><dd>${escapeHtml(formatDecimal(wallet.balance, 2))}</dd></div>
       <div class="kv__row"><dt>Status</dt><dd data-testid="wallet-status">${walletStatusPill(wallet.status)}</dd></div>
-      <div class="kv__row"><dt>Updated</dt><dd><span class="mono">${escapeHtml(wallet.updated_at)}</span></dd></div>
+      <div class="kv__row"><dt>Updated</dt><dd><span class="mono" title="${escapeHtml(wallet.updated_at)}">${escapeHtml(formatDateTimeCompact(wallet.updated_at))}</span></dd></div>
     </dl>
   `;
 }
@@ -96,7 +96,11 @@ function renderTransactions(transactions) {
         },
       },
       { header: "Status", cell: (t) => txStatusPill(t.status) },
-      { header: "Time", cell: (t) => `<span class="mono">${escapeHtml(t.created_at)}</span>` },
+      {
+        header: "Time",
+        cell: (t) =>
+          `<span class="mono" title="${escapeHtml(t.created_at)}">${escapeHtml(formatDateTimeCompact(t.created_at))}</span>`,
+      },
       { header: "Error", cell: (t) => (t.error_code ? `<code class="mono">${escapeHtml(t.error_code)}</code>` : "") },
     ],
     rows: transactions,
