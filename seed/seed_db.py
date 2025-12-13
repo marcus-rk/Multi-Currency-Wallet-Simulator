@@ -225,44 +225,44 @@ def _seed_dataset() -> tuple[int, int]:
 	now += timedelta(minutes=3)
 
 	# --- Fund wallets (completed) ---
-	deposit("dk_main", "1500.00")
-	deposit("eur_main", "600.00")
-	deposit("usd_main", "400.00")
-	deposit("dk_savings", "2500.00")
-	deposit("eur_travel", "220.00")
+	deposit("dk_main", "1537.42")
+	deposit("eur_main", "687.33")
+	deposit("usd_main", "418.79")
+	deposit("dk_savings", "3470.89")
+	deposit("eur_travel", "237.58")
 
 	# --- Withdrawals (completed) ---
-	withdraw("dk_main", "125.50")
-	withdraw("eur_travel", "40.00")
+	withdraw("dk_main", "128.17")
+	withdraw("eur_travel", "43.21")
 
 	# --- Exchanges (completed, deterministic FX rates) ---
 	# DKK -> EUR
-	exchange("dk_main", "eur_main", "300.00", fx_rate="0.13")
+	exchange("dk_main", "eur_main", "312.83", fx_rate="0.1317")
 	# EUR -> USD
-	exchange("eur_main", "usd_main", "100.00", fx_rate="1.08")
+	exchange("eur_main", "usd_main", "123.45", fx_rate="1.0834")
 
 	# --- Wallet lifecycle history ---
 	# Frozen wallet with a failed operation
 	change_status("dk_history", WalletStatus.FROZEN)
-	deposit("dk_history", "50.00")  # will be FAILED (invalid state)
+	deposit("dk_history", "52.19")  # will be FAILED (invalid state)
 
 	# Freeze -> unfreeze -> keep ACTIVE (shows both transitions)
-	deposit("eur_history", "180.00")
+	deposit("eur_history", "186.67")
 	change_status("eur_history", WalletStatus.FROZEN)
 	change_status("eur_history", WalletStatus.ACTIVE)
-	withdraw("eur_history", "15.00")
+	withdraw("eur_history", "15.84")
 
 	# Close a wallet after some activity (final CLOSED)
-	deposit("usd_spare", "90.00")
+	deposit("usd_spare", "94.13")
 	change_status("usd_spare", WalletStatus.CLOSED)
-	withdraw("usd_spare", "10.00")  # FAILED (invalid state)
+	withdraw("usd_spare", "10.07")  # FAILED (invalid state)
 
 	# Another closed wallet (final CLOSED)
-	deposit("dk_savings", "10.00")
+	deposit("dk_savings", "12.83")
 	change_status("dk_savings", WalletStatus.CLOSED)
 
 	# Failed exchange due to invalid wallet state (source is CLOSED)
-	exchange("dk_savings", "eur_main", "5.00", fx_rate="0.13")
+	exchange("dk_savings", "eur_main", "7.77", fx_rate="0.1321")
 
 	wallet_count = len(wallets)
 	return wallet_count, tx_count

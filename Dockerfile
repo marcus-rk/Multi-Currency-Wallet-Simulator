@@ -22,7 +22,10 @@ RUN pip install --no-cache-dir --upgrade pip \
 COPY . .
 
 # SQLite file lives under /app/instance by default; ensure the directory exists.
-RUN mkdir -p /app/instance
+# Do not bake any host DB into the image; build with a fresh demo dataset.
+RUN mkdir -p /app/instance \
+	&& rm -f /app/instance/*.db /app/instance/*.sqlite /app/instance/*.sqlite3 \
+	&& python seed/seed_db.py --reset --force
 
 EXPOSE 5000
 

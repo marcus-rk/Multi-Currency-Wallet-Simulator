@@ -126,6 +126,8 @@ Build the image:
 docker build -t wallet-sim:latest .
 ```
 
+Note: The Docker build ignores local `instance/*.db` files (via `.dockerignore`) and bakes a fresh seeded demo database into the image.
+
 Run the container with a stable name:
 
 ```bash

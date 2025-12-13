@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+**/__pycache__/
+.pytest_cache/
+htmlcov/
+coverage.xml
+instance/
+*.db
+*.sqlite
+*.sqlite3
+.DS_Store
+.git/
+.gitignore
