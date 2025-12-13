@@ -69,6 +69,36 @@ def test_list_wallets_includes_created_wallet(client):
     assert created_wallet_id in returned_ids
 
 
+@pytest.mark.integration
+def test_freeze_wallet_persists_status_and_records_status_change_transaction(
+    client, app_instance
+):
+    # Arrange: create wallet
+    wallet_id = create_wallet(client, "DKK")
+
+    # Act: freeze via API
+    response = client.post(f"/api/wallets/{wallet_id}/freeze")
+
+    # Assert (API)
+    assert response.status_code == 200
+    body = response.get_json()
+    assert isinstance(body, dict)
+    assert body["wallet"]["id"] == wallet_id
+    assert body["wallet"]["status"] == "FROZEN"
+    assert body["transaction"]["type"] == TransactionType.STATUS_CHANGE.value
+    assert body["transaction"]["status"] == TransactionStatus.COMPLETED.value
+
+    # Assert (DB)
+    with app_instance.app_context():
+        persisted_wallet = get_wallet(wallet_id)
+        assert persisted_wallet.status.value == "FROZEN"
+
+        transactions = get_transactions_for_wallet(wallet_id)
+        assert len(transactions) == 1
+        assert transactions[0].type == TransactionType.STATUS_CHANGE
+
+
+
 # --- Deposit / Withdraw ---
 
 

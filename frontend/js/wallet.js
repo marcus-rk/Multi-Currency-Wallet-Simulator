@@ -1,8 +1,21 @@
+/**
+ * Wallet page controller.
+ *
+ * Uses API endpoints:
+ * - GET  /api/wallets/:id
+ * - GET  /api/wallets/:id/transactions
+ * - POST /api/wallets/:id/deposit
+ * - POST /api/wallets/:id/withdraw
+ * - POST /api/wallets/:id/freeze
+ * - POST /api/wallets/:id/unfreeze
+ * - POST /api/wallets/:id/close
+ */
+
 import { SUPPORTED_CURRENCIES } from "./config.js";
 import { fetchJson, formatError, ApiError } from "./api.js";
 import { clearFeedback, setError, setLoading, setStatus, escapeHtml, renderTable, formatDecimal } from "./ui.js";
 
-const els = {
+const uiElements = {
   loading: document.getElementById("loading"),
   status: document.getElementById("statusBox"),
   error: document.getElementById("errorBox"),
@@ -15,6 +28,9 @@ const els = {
   withdrawCurrency: document.getElementById("withdrawCurrency"),
   depositAmount: document.getElementById("depositAmount"),
   withdrawAmount: document.getElementById("withdrawAmount"),
+  freezeButton: document.getElementById("freezeWallet"),
+  unfreezeButton: document.getElementById("unfreezeWallet"),
+  closeButton: document.getElementById("closeWallet"),
 };
 
 function getWalletId() {
@@ -55,7 +71,7 @@ function renderWalletInfo(wallet) {
       <div class="kv__row"><dt>ID</dt><dd><code class="mono">${escapeHtml(wallet.id)}</code></dd></div>
       <div class="kv__row"><dt>Currency</dt><dd>${escapeHtml(wallet.currency)}</dd></div>
       <div class="kv__row"><dt>Balance</dt><dd>${escapeHtml(formatDecimal(wallet.balance, 2))}</dd></div>
-      <div class="kv__row"><dt>Status</dt><dd>${walletStatusPill(wallet.status)}</dd></div>
+      <div class="kv__row"><dt>Status</dt><dd data-testid="wallet-status">${walletStatusPill(wallet.status)}</dd></div>
       <div class="kv__row"><dt>Updated</dt><dd><span class="mono">${escapeHtml(wallet.updated_at)}</span></dd></div>
     </dl>
   `;
@@ -88,8 +104,8 @@ function renderTransactions(transactions) {
 }
 
 async function loadWalletAndTransactions(walletId) {
-  clearFeedback({ loadingEl: els.loading, statusEl: els.status, errorEl: els.error });
-  setLoading(els.loading, true, "Loading wallet...");
+  clearFeedback({ loadingEl: uiElements.loading, statusEl: uiElements.status, errorEl: uiElements.error });
+  setLoading(uiElements.loading, true, "Loading wallet...");
 
   try {
     const [wallet, transactions] = await Promise.all([
@@ -98,23 +114,23 @@ async function loadWalletAndTransactions(walletId) {
     ]);
 
     document.title = `Wallet ${wallet.id}`;
-    els.walletInfo.innerHTML = renderWalletInfo(wallet);
-    els.transactions.innerHTML = renderTransactions(transactions);
+    uiElements.walletInfo.innerHTML = renderWalletInfo(wallet);
+    uiElements.transactions.innerHTML = renderTransactions(transactions);
 
-    populateCurrencySelect(els.depositCurrency, wallet.currency);
-    populateCurrencySelect(els.withdrawCurrency, wallet.currency);
+    populateCurrencySelect(uiElements.depositCurrency, wallet.currency);
+    populateCurrencySelect(uiElements.withdrawCurrency, wallet.currency);
   } catch (err) {
-    setError(els.error, formatError(err));
-    els.walletInfo.innerHTML = "";
-    els.transactions.innerHTML = "";
+    setError(uiElements.error, formatError(err));
+    uiElements.walletInfo.innerHTML = "";
+    uiElements.transactions.innerHTML = "";
   } finally {
-    setLoading(els.loading, false);
+    setLoading(uiElements.loading, false);
   }
 }
 
 async function runWalletOperation({ walletId, kind, amount, currency }) {
-  clearFeedback({ loadingEl: els.loading, statusEl: els.status, errorEl: els.error });
-  setLoading(els.loading, true, `${kind}...`);
+  clearFeedback({ loadingEl: uiElements.loading, statusEl: uiElements.status, errorEl: uiElements.error });
+  setLoading(uiElements.loading, true, `${kind}...`);
 
   try {
     const response = await fetchJson(`/api/wallets/${encodeURIComponent(walletId)}/${kind}`, {
@@ -124,55 +140,77 @@ async function runWalletOperation({ walletId, kind, amount, currency }) {
 
     const tx = response.transaction;
     if (tx && tx.error_code) {
-      setError(els.error, `${tx.error_code} (HTTP 422)`);
+      setError(uiElements.error, `${tx.error_code} (HTTP 422)`);
     } else {
-      setStatus(els.status, `${kind} completed`);
+      setStatus(uiElements.status, `${kind} completed`);
     }
 
     await loadWalletAndTransactions(walletId);
   } catch (err) {
-    setError(els.error, formatError(err));
+    setError(uiElements.error, formatError(err));
 
     // For 422 responses, backend sends useful JSON (wallet + transaction)
     if (err instanceof ApiError && err.status === 422 && err.data && err.data.transaction) {
       const tx = err.data.transaction;
-      setError(els.error, `${tx.error_code || "Operation failed"} (HTTP 422)`);
+      setError(uiElements.error, `${tx.error_code || "Operation failed"} (HTTP 422)`);
       await loadWalletAndTransactions(walletId);
     }
   } finally {
-    setLoading(els.loading, false);
+    setLoading(uiElements.loading, false);
+  }
+}
+
+async function runWalletLifecycle({ walletId, action }) {
+  clearFeedback({ loadingEl: uiElements.loading, statusEl: uiElements.status, errorEl: uiElements.error });
+  setLoading(uiElements.loading, true, `${action}...`);
+
+  try {
+    await fetchJson(`/api/wallets/${encodeURIComponent(walletId)}/${action}`, {
+      method: "POST",
+    });
+    setStatus(uiElements.status, `${action} completed`);
+    await loadWalletAndTransactions(walletId);
+  } catch (err) {
+    setError(uiElements.error, formatError(err));
+    await loadWalletAndTransactions(walletId);
+  } finally {
+    setLoading(uiElements.loading, false);
   }
 }
 
 function init() {
   const walletId = getWalletId();
   if (!walletId) {
-    setError(els.error, "Missing wallet id in query string (?id=...)");
+    setError(uiElements.error, "Missing wallet id in query string (?id=...)");
     return;
   }
 
-  els.refreshButton.addEventListener("click", () => loadWalletAndTransactions(walletId));
+  uiElements.refreshButton.addEventListener("click", () => loadWalletAndTransactions(walletId));
 
-  els.depositForm.addEventListener("submit", async (event) => {
+  uiElements.freezeButton.addEventListener("click", () => runWalletLifecycle({ walletId, action: "freeze" }));
+  uiElements.unfreezeButton.addEventListener("click", () => runWalletLifecycle({ walletId, action: "unfreeze" }));
+  uiElements.closeButton.addEventListener("click", () => runWalletLifecycle({ walletId, action: "close" }));
+
+  uiElements.depositForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     await runWalletOperation({
       walletId,
       kind: "deposit",
-      amount: els.depositAmount.value,
-      currency: els.depositCurrency.value,
+      amount: uiElements.depositAmount.value,
+      currency: uiElements.depositCurrency.value,
     });
-    els.depositForm.reset();
+    uiElements.depositForm.reset();
   });
 
-  els.withdrawForm.addEventListener("submit", async (event) => {
+  uiElements.withdrawForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     await runWalletOperation({
       walletId,
       kind: "withdraw",
-      amount: els.withdrawAmount.value,
-      currency: els.withdrawCurrency.value,
+      amount: uiElements.withdrawAmount.value,
+      currency: uiElements.withdrawCurrency.value,
     });
-    els.withdrawForm.reset();
+    uiElements.withdrawForm.reset();
   });
 
   loadWalletAndTransactions(walletId);

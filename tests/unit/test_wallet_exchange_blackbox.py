@@ -33,7 +33,7 @@ from app.domain.rules.apply_exchange import apply_exchange
     (Decimal("9999999999"), Decimal("0.5"), Decimal("4999999999.5")), # large value within valid partition
 ])
 def test_exchange_valid_amount_passes(wallet_factory, get_fixed_timestamp, amount, fx_rate, expected_target_credit):
-    # Arrange
+    # Arrange: ACTIVE source/target wallets with different currencies
     source_wallet = wallet_factory(
         balance=Decimal("100000000000"),
         currency=Currency.EUR,
@@ -45,7 +45,7 @@ def test_exchange_valid_amount_passes(wallet_factory, get_fixed_timestamp, amoun
         status=WalletStatus.ACTIVE,
     )
 
-    # Act
+    # Act: exchange a valid amount using the provided FX rate
     _, _, transaction = apply_exchange(
         source_wallet=source_wallet,
         target_wallet=target_wallet,
@@ -55,7 +55,7 @@ def test_exchange_valid_amount_passes(wallet_factory, get_fixed_timestamp, amoun
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: transaction completes and credited amount matches expectation
     expected = (
         TransactionStatus.COMPLETED,
         None,
@@ -75,7 +75,7 @@ def test_exchange_valid_amount_passes(wallet_factory, get_fixed_timestamp, amoun
     (Decimal("0.01"), Decimal("0.00"), Decimal("0.01"), Decimal("1.0"), Decimal("0.00"), Decimal("0.01")), # Boundary: exact balance (small)
 ])
 def test_exchange_updates_balances_correctly(wallet_factory, get_fixed_timestamp, initial_source, initial_target, amount, fx_rate, expected_source, expected_target):
-    # Arrange
+    # Arrange: wallets with known balances for a balance-update check
     source_wallet = wallet_factory(
         balance=initial_source,
         currency=Currency.EUR,
@@ -85,7 +85,7 @@ def test_exchange_updates_balances_correctly(wallet_factory, get_fixed_timestamp
         currency=Currency.USD,
     )
 
-    # Act
+    # Act: perform exchange
     updated_source, updated_target, _ = apply_exchange(
         source_wallet=source_wallet,
         target_wallet=target_wallet,
@@ -95,7 +95,7 @@ def test_exchange_updates_balances_correctly(wallet_factory, get_fixed_timestamp
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: balances are updated correctly
     assert (updated_source.balance, updated_target.balance) == (expected_source, expected_target)
 
 
@@ -105,7 +105,7 @@ def test_exchange_updates_balances_correctly(wallet_factory, get_fixed_timestamp
     (Currency.EUR, Currency.USD),
 ])
 def test_exchange_supported_currency_pairs_pass(wallet_factory, get_fixed_timestamp, source_currency, target_currency):
-    # Arrange
+    # Arrange: ACTIVE wallets using a supported currency pair
     source_wallet = wallet_factory(
         balance=Decimal("100.00"),
         currency=source_currency,
@@ -117,7 +117,7 @@ def test_exchange_supported_currency_pairs_pass(wallet_factory, get_fixed_timest
         status=WalletStatus.ACTIVE,
     )
 
-    # Act
+    # Act: exchange a fixed valid amount
     updated_source, updated_target, transaction = apply_exchange(
         source_wallet=source_wallet,
         target_wallet=target_wallet,
@@ -127,7 +127,7 @@ def test_exchange_supported_currency_pairs_pass(wallet_factory, get_fixed_timest
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: balances and transaction outcome match expectations
     expected = (
         Decimal("90.00"),
         Decimal("10.00"),
@@ -155,11 +155,11 @@ def test_exchange_supported_currency_pairs_pass(wallet_factory, get_fixed_timest
     Decimal("0.00"),        # boundary between invalid and valid
 ])
 def test_exchange_invalid_amount_fails(wallet_factory, get_fixed_timestamp, amount):
-    # Arrange
+    # Arrange: valid wallets but an invalid (non-positive) amount
     source = wallet_factory(balance=Decimal("100.00"), currency=Currency.EUR)
     target = wallet_factory(balance=Decimal("0.00"), currency=Currency.USD)
 
-    # Act
+    # Act: attempt exchange
     _, _, transaction = apply_exchange(
         source_wallet=source,
         target_wallet=target,
@@ -169,7 +169,7 @@ def test_exchange_invalid_amount_fails(wallet_factory, get_fixed_timestamp, amou
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: transaction fails with INVALID_AMOUNT
     assert transaction.error_code == TransactionErrorCode.INVALID_AMOUNT
 
 
@@ -181,13 +181,13 @@ def test_exchange_invalid_amount_fails(wallet_factory, get_fixed_timestamp, amou
     Decimal("0.00"),        # boundary between invalid and valid
 ])
 def test_exchange_failure_keeps_both_balances_unchanged(wallet_factory, get_fixed_timestamp, amount):
-    # Arrange
+    # Arrange: wallets with known starting balances
     initial_source = Decimal("100.00")
     initial_target = Decimal("50.00")
     source = wallet_factory(balance=initial_source, currency=Currency.EUR)
     target = wallet_factory(balance=initial_target, currency=Currency.USD)
 
-    # Act
+    # Act: attempt exchange with invalid amount
     updated_source, updated_target, _ = apply_exchange(
         source_wallet=source,
         target_wallet=target,
@@ -197,7 +197,7 @@ def test_exchange_failure_keeps_both_balances_unchanged(wallet_factory, get_fixe
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: balances remain unchanged when exchange fails
     assert (updated_source.balance, updated_target.balance) == (initial_source, initial_target)
 
 
@@ -206,11 +206,11 @@ def test_exchange_failure_keeps_both_balances_unchanged(wallet_factory, get_fixe
     Decimal("1000.00"), # Way above
 ])
 def test_exchange_insufficient_funds_fails(wallet_factory, get_fixed_timestamp, amount):
-    # Arrange
+    # Arrange: source wallet does not have enough funds for the requested amount
     source = wallet_factory(balance=Decimal("100.00"), currency=Currency.EUR)
     target = wallet_factory(balance=Decimal("0.00"), currency=Currency.USD)
 
-    # Act
+    # Act: attempt exchange
     _, _, transaction = apply_exchange(
         source_wallet=source,
         target_wallet=target,
@@ -220,7 +220,7 @@ def test_exchange_insufficient_funds_fails(wallet_factory, get_fixed_timestamp, 
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: transaction fails with INSUFFICIENT_FUNDS
     assert transaction.error_code == TransactionErrorCode.INSUFFICIENT_FUNDS
 
 
@@ -231,11 +231,11 @@ def test_exchange_insufficient_funds_fails(wallet_factory, get_fixed_timestamp, 
     (WalletStatus.ACTIVE, WalletStatus.CLOSED),
 ])
 def test_exchange_with_non_active_wallets_fails(wallet_factory, get_fixed_timestamp, source_status, target_status):
-    # Arrange
+    # Arrange: one or both wallets are not ACTIVE (exchange should be blocked)
     source = wallet_factory(status=source_status, currency=Currency.EUR, balance=Decimal("100.00"))
     target = wallet_factory(status=target_status, currency=Currency.USD)
 
-    # Act
+    # Act: attempt exchange
     _, _, transaction = apply_exchange(
         source_wallet=source,
         target_wallet=target,
@@ -245,16 +245,16 @@ def test_exchange_with_non_active_wallets_fails(wallet_factory, get_fixed_timest
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: transaction fails with INVALID_WALLET_STATE
     assert transaction.error_code == TransactionErrorCode.INVALID_WALLET_STATE
 
 
 def test_exchange_same_currency_fails(wallet_factory, get_fixed_timestamp):
-    # Arrange
+    # Arrange: source and target wallets use the same currency (unsupported)
     source = wallet_factory(currency=Currency.EUR, balance=Decimal("100.00"))
     target = wallet_factory(currency=Currency.EUR) # Same currency
 
-    # Act
+    # Act: attempt exchange
     _, _, transaction = apply_exchange(
         source_wallet=source,
         target_wallet=target,
@@ -264,7 +264,7 @@ def test_exchange_same_currency_fails(wallet_factory, get_fixed_timestamp):
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: transaction fails with UNSUPPORTED_CURRENCY
     assert transaction.error_code == TransactionErrorCode.UNSUPPORTED_CURRENCY
 
 
@@ -275,11 +275,11 @@ def test_exchange_same_currency_fails(wallet_factory, get_fixed_timestamp):
     Decimal("-1.5"),        # Negative EP
 ])
 def test_exchange_invalid_fx_rate_fails(wallet_factory, get_fixed_timestamp, fx_rate):
-    # Arrange
+    # Arrange: FX rate is missing/invalid (unavailable)
     source = wallet_factory(currency=Currency.EUR, balance=Decimal("100.00"))
     target = wallet_factory(currency=Currency.USD)
 
-    # Act
+    # Act: attempt exchange
     _, _, transaction = apply_exchange(
         source_wallet=source,
         target_wallet=target,
@@ -289,7 +289,7 @@ def test_exchange_invalid_fx_rate_fails(wallet_factory, get_fixed_timestamp, fx_
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: transaction fails with EXCHANGE_RATE_UNAVAILABLE
     assert transaction.error_code == TransactionErrorCode.EXCHANGE_RATE_UNAVAILABLE
 
 
@@ -298,11 +298,11 @@ def test_exchange_invalid_fx_rate_fails(wallet_factory, get_fixed_timestamp, fx_
 # ------------------------------------------------
 
 def test_exchange_invalid_amount_type_raises_typeerror(wallet_factory, get_fixed_timestamp):
-    # Arrange
+    # Arrange: wallets are valid but amount is the wrong type
     source = wallet_factory(currency=Currency.EUR, balance=Decimal("100.00"))
     target = wallet_factory(currency=Currency.USD)
 
-    # Act / Assert
+    # Act + Assert: rule enforces Decimal typing
     with pytest.raises(TypeError):
         apply_exchange(
             source_wallet=source,

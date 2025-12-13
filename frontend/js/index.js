@@ -1,3 +1,11 @@
+/**
+ * Wallet list (index) page controller.
+ *
+ * Uses API endpoints:
+ * - GET  /api/wallets
+ * - POST /api/wallets
+ */
+
 import { SUPPORTED_CURRENCIES } from "./config.js";
 import { fetchJson, formatError, ApiError } from "./api.js";
 import { clearFeedback, setError, setLoading, setStatus, escapeHtml, renderTable, formatDecimal } from "./ui.js";

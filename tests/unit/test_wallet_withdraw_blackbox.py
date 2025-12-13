@@ -33,7 +33,7 @@ from app.domain.rules.apply_withdraw import apply_withdraw
     Decimal("9999999999"),  # large value within valid partition
 ])
 def test_withdraw_valid_amount_passes(wallet_factory, get_fixed_timestamp, amount: Decimal):
-    # Arrange
+    # Arrange: ACTIVE wallet with sufficient funds
     initial_balance = Decimal("100000000000")
     wallet = wallet_factory(
         balance=initial_balance,
@@ -41,7 +41,7 @@ def test_withdraw_valid_amount_passes(wallet_factory, get_fixed_timestamp, amoun
         status=WalletStatus.ACTIVE,
     )
 
-    # Act
+    # Act: withdraw a valid amount in the wallet currency
     _, transaction = apply_withdraw(
         wallet=wallet,
         amount=amount,
@@ -50,7 +50,7 @@ def test_withdraw_valid_amount_passes(wallet_factory, get_fixed_timestamp, amoun
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: transaction succeeds without an error code
     expected = (
         TransactionStatus.COMPLETED,
         None,
@@ -68,14 +68,14 @@ def test_withdraw_valid_amount_passes(wallet_factory, get_fixed_timestamp, amoun
     (Decimal("0.01"), Decimal("0.01"), Decimal("0.00")),     # Boundary: exact balance (small)
 ])
 def test_withdraw_deducts_correctly_from_balance(wallet_factory, get_fixed_timestamp, initial_balance, amount, expected_remaining):
-    # Arrange
+    # Arrange: ACTIVE wallet with known balance and a valid withdraw amount
     wallet = wallet_factory(
         balance=initial_balance,
         currency=Currency.DKK,
         status=WalletStatus.ACTIVE,
     )
 
-    # Act
+    # Act: withdraw and capture updated wallet
     updated_wallet, _ = apply_withdraw(
         wallet=wallet,
         amount=amount,
@@ -84,7 +84,7 @@ def test_withdraw_deducts_correctly_from_balance(wallet_factory, get_fixed_times
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: balance decreases by the withdrawn amount
     assert updated_wallet.balance == expected_remaining
 
 
@@ -94,7 +94,7 @@ def test_withdraw_deducts_correctly_from_balance(wallet_factory, get_fixed_times
     Currency.USD,
 ])
 def test_withdraw_supported_currencies_pass(wallet_factory, get_fixed_timestamp, currency):
-    # Arrange
+    # Arrange: ACTIVE wallet with a supported currency
     initial_balance = Decimal("100.00")
     wallet = wallet_factory(
         balance=initial_balance,
@@ -102,7 +102,7 @@ def test_withdraw_supported_currencies_pass(wallet_factory, get_fixed_timestamp,
         status=WalletStatus.ACTIVE,
     )
 
-    # Act
+    # Act: withdraw a valid amount in the same currency
     updated_wallet, transaction = apply_withdraw(
         wallet=wallet,
         amount=Decimal("10.00"),
@@ -111,7 +111,7 @@ def test_withdraw_supported_currencies_pass(wallet_factory, get_fixed_timestamp,
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: wallet balance decreases and transaction succeeds
     expected = (
         initial_balance - Decimal("10.00"),
         TransactionStatus.COMPLETED,
@@ -137,14 +137,14 @@ def test_withdraw_supported_currencies_pass(wallet_factory, get_fixed_timestamp,
     Decimal("0.00"),        # boundary invalid
 ])
 def test_withdraw_invalid_amount_fails(wallet_factory, get_fixed_timestamp, amount: Decimal):
-    # Arrange
+    # Arrange: ACTIVE wallet and an invalid (non-positive) withdraw amount
     wallet = wallet_factory(
         balance=Decimal("100.00"),
         currency=Currency.DKK,
         status=WalletStatus.ACTIVE,
     )
 
-    # Act
+    # Act: attempt the withdrawal
     _, transaction = apply_withdraw(
         wallet=wallet,
         amount=amount,
@@ -153,7 +153,7 @@ def test_withdraw_invalid_amount_fails(wallet_factory, get_fixed_timestamp, amou
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: transaction fails with INVALID_AMOUNT
     expected = (
         TransactionStatus.FAILED,
         TransactionErrorCode.INVALID_AMOUNT,
@@ -173,7 +173,7 @@ def test_withdraw_invalid_amount_fails(wallet_factory, get_fixed_timestamp, amou
     Decimal("0.00"),        # boundary invalid
 ])
 def test_withdraw_negative_amount_keeps_balance(wallet_factory, get_fixed_timestamp, amount: Decimal):
-    # Arrange
+    # Arrange: ACTIVE wallet with known starting balance
     initial_balance = Decimal("100.00")
     wallet = wallet_factory(
         balance=initial_balance,
@@ -181,7 +181,7 @@ def test_withdraw_negative_amount_keeps_balance(wallet_factory, get_fixed_timest
         status=WalletStatus.ACTIVE,
     )
 
-    # Act
+    # Act: attempt an invalid withdrawal
     updated_wallet, _ = apply_withdraw(
         wallet=wallet,
         amount=amount,
@@ -190,7 +190,7 @@ def test_withdraw_negative_amount_keeps_balance(wallet_factory, get_fixed_timest
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: balance stays unchanged on failed withdrawal
     assert updated_wallet.balance == initial_balance
 
 
@@ -199,14 +199,14 @@ def test_withdraw_negative_amount_keeps_balance(wallet_factory, get_fixed_timest
     Decimal("1000.00"),     # Way above balance
 ])
 def test_withdraw_insufficient_funds_fails(wallet_factory, get_fixed_timestamp, amount: Decimal):
-    # Arrange
+    # Arrange: ACTIVE wallet where amount exceeds available balance
     wallet = wallet_factory(
         balance=Decimal("100.00"),
         currency=Currency.DKK,
         status=WalletStatus.ACTIVE,
     )
 
-    # Act
+    # Act: attempt the withdrawal
     _, transaction = apply_withdraw(
         wallet=wallet,
         amount=amount,
@@ -215,7 +215,7 @@ def test_withdraw_insufficient_funds_fails(wallet_factory, get_fixed_timestamp, 
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: transaction fails with INSUFFICIENT_FUNDS
     expected = (
         TransactionStatus.FAILED,
         TransactionErrorCode.INSUFFICIENT_FUNDS,
@@ -232,14 +232,14 @@ def test_withdraw_insufficient_funds_fails(wallet_factory, get_fixed_timestamp, 
     WalletStatus.CLOSED,
 ])
 def test_withdraw_on_non_active_wallet_fails(wallet_factory, get_fixed_timestamp, status: WalletStatus):
-    # Arrange
+    # Arrange: wallet is not ACTIVE (withdraw should be blocked)
     wallet = wallet_factory(
         balance=Decimal("100.00"),
         currency=Currency.DKK,
         status=status,
     )
 
-    # Act
+    # Act: attempt withdraw from non-active wallet
     _, transaction = apply_withdraw(
         wallet=wallet,
         amount=Decimal("10.00"),
@@ -248,7 +248,7 @@ def test_withdraw_on_non_active_wallet_fails(wallet_factory, get_fixed_timestamp
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: transaction fails with INVALID_WALLET_STATE
     expected = (
         TransactionStatus.FAILED,
         TransactionErrorCode.INVALID_WALLET_STATE,
@@ -265,14 +265,14 @@ def test_withdraw_on_non_active_wallet_fails(wallet_factory, get_fixed_timestamp
     Currency.USD,
 ])
 def test_withdraw_currency_mismatch_fails(wallet_factory, get_fixed_timestamp, withdraw_currency):
-    # Arrange
+    # Arrange: ACTIVE DKK wallet but withdraw currency differs (unsupported)
     wallet = wallet_factory(
         balance=Decimal("100.00"),
         currency=Currency.DKK,
         status=WalletStatus.ACTIVE,
     )
 
-    # Act
+    # Act: attempt withdraw with mismatching currency
     _, transaction = apply_withdraw(
         wallet=wallet,
         amount=Decimal("10.00"),
@@ -281,7 +281,7 @@ def test_withdraw_currency_mismatch_fails(wallet_factory, get_fixed_timestamp, w
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: transaction fails with UNSUPPORTED_CURRENCY
     expected = (
         TransactionStatus.FAILED,
         TransactionErrorCode.UNSUPPORTED_CURRENCY,
@@ -303,7 +303,7 @@ def test_withdraw_currency_mismatch_fails(wallet_factory, get_fixed_timestamp, w
     Decimal("1000000.00"),
 ])
 def test_withdraw_returns_decimal_balance_and_amount(wallet_factory, get_fixed_timestamp, amount: Decimal):
-    # Arrange
+    # Arrange: ACTIVE wallet and a valid withdraw amount
     initial_balance = Decimal("10000000.00")
     wallet = wallet_factory(
         balance=initial_balance,
@@ -311,7 +311,7 @@ def test_withdraw_returns_decimal_balance_and_amount(wallet_factory, get_fixed_t
         status=WalletStatus.ACTIVE,
     )
 
-    # Act
+    # Act: withdraw and capture returned wallet/transaction objects
     updated_wallet, transaction = apply_withdraw(
         wallet=wallet,
         amount=amount,
@@ -320,7 +320,7 @@ def test_withdraw_returns_decimal_balance_and_amount(wallet_factory, get_fixed_t
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: decimals remain Decimal (no float conversion)
     expected = (Decimal, Decimal)
     actual = (type(updated_wallet.balance), type(transaction.amount))
     assert actual == expected
@@ -332,14 +332,14 @@ def test_withdraw_returns_decimal_balance_and_amount(wallet_factory, get_fixed_t
     None,      # NoneType
 ])
 def test_withdraw_invalid_amount_type_raises_typeerror(wallet_factory, get_fixed_timestamp, amount):
-    # Arrange
+    # Arrange: ACTIVE wallet but amount is the wrong type
     wallet = wallet_factory(
         balance=Decimal("100.00"),
         currency=Currency.DKK,
         status=WalletStatus.ACTIVE,
     )
 
-    # Act / Assert
+    # Act + Assert: rule enforces Decimal typing
     with pytest.raises(TypeError):
         apply_withdraw(
             wallet=wallet,

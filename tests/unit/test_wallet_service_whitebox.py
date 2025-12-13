@@ -40,8 +40,8 @@ from uuid import UUID
 
 import pytest
 
-from app.domain.enums import Currency, TransactionStatus
-from app.domain.exceptions import WalletNotFoundError
+from app.domain.enums import Currency, TransactionStatus, TransactionType, WalletStatus
+from app.domain.exceptions import WalletNotFoundError, WalletStateError
 from app.domain.models.Transaction import Transaction
 from app.domain.models.Wallet import Wallet
 from app.services import wallet_service
@@ -258,7 +258,65 @@ def test_exchange_money_calls_fx_then_persists(monkeypatch, wallet_factory):
 
     # Assert (persistence intent): both wallets + transaction were persisted
     assert persisted["wallets"] == [updated_source, updated_target]
+
+
+def test_change_wallet_status_persists_wallet_and_status_change_transaction(
+    monkeypatch, wallet_factory
+):
+    # Arrange: deterministic tx id + repo wallet
+    fixed_uuid = UUID("00000000-0000-0000-0000-000000000005")
+    monkeypatch.setattr(wallet_service, "uuid4", lambda: fixed_uuid)
+
+    wallet = wallet_factory(wallet_id="w-status")
+    monkeypatch.setattr(wallet_service, "repo_get_wallet", lambda _wallet_id: wallet)
+
+    persisted: dict[str, object] = {"wallet": None, "transaction": None}
+
+    def persist_wallet(w: Wallet) -> None:
+        persisted["wallet"] = w
+
+    def persist_transaction(t: Transaction) -> None:
+        persisted["transaction"] = t
+
+    monkeypatch.setattr(wallet_service, "update_wallet", persist_wallet)
+    monkeypatch.setattr(wallet_service, "create_transaction", persist_transaction)
+
+    # Act: freeze the wallet via the service entrypoint
+    updated_wallet, tx = wallet_service.change_wallet_status(
+        wallet_id="w-status",
+        new_status=WalletStatus.FROZEN,
+        now=wallet.updated_at,
+    )
+
+    # Assert: return values
+    assert updated_wallet.status == WalletStatus.FROZEN
+    assert tx is not None
+    assert tx.type == TransactionType.STATUS_CHANGE
+
+    # Assert: persistence intent
+    assert persisted["wallet"] == updated_wallet
     assert persisted["transaction"] == tx
+
+
+def test_change_wallet_status_invalid_transition_raises_and_does_not_persist(
+    monkeypatch, wallet_factory
+):
+    # Arrange: ACTIVE -> ACTIVE is not allowed by the domain rule
+    wallet = wallet_factory(status=WalletStatus.ACTIVE)
+    monkeypatch.setattr(wallet_service, "repo_get_wallet", lambda _wallet_id: wallet)
+
+    def fail_if_persist(_w: Wallet) -> None:
+        raise AssertionError("Should not persist wallet on invalid transition")
+
+    monkeypatch.setattr(wallet_service, "update_wallet", fail_if_persist)
+
+    # Act + Assert: invalid transition is rejected and nothing is persisted
+    with pytest.raises(WalletStateError):
+        wallet_service.change_wallet_status(
+            wallet_id=wallet.id,
+            new_status=WalletStatus.ACTIVE,
+            now=wallet.updated_at,
+        )
 
 
 def test_list_transactions_raises_when_wallet_missing(monkeypatch):

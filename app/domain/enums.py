@@ -5,6 +5,7 @@ class TransactionType(Enum):
     DEPOSIT = "DEPOSIT"
     WITHDRAWAL = "WITHDRAWAL"
     EXCHANGE = "EXCHANGE"
+    STATUS_CHANGE = "STATUS_CHANGE"
 
 class TransactionStatus(Enum):
     COMPLETED = "COMPLETED"

@@ -1,3 +1,13 @@
+/**
+ * UI helper utilities.
+ *
+ * Small, framework-free helpers for:
+ * - feedback banners (loading/status/error)
+ * - HTML escaping
+ * - deterministic decimal formatting
+ * - simple table rendering
+ */
+
 export function setLoading(loadingEl, isLoading, text = "") {
   if (!loadingEl) return;
   loadingEl.textContent = isLoading ? (text || "Loading...") : "";

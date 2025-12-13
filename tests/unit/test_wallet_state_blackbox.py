@@ -24,51 +24,51 @@ from app.domain.rules.wallet_state import (
 # ------------------------------------------------
 
 def test_transition_active_to_frozen(wallet_factory, get_fixed_timestamp):
-    # Arrange
+    # Arrange: wallet starts ACTIVE
     wallet = wallet_factory(status=WalletStatus.ACTIVE)
 
-    # Act
+    # Act: freeze wallet
     updated_wallet = freeze_wallet(wallet, now=get_fixed_timestamp)
 
-    # Assert
+    # Assert: wallet becomes FROZEN
     assert updated_wallet.status == WalletStatus.FROZEN
 
 
 def test_transition_frozen_to_active(wallet_factory, get_fixed_timestamp):
-    # Arrange
+    # Arrange: wallet starts FROZEN
     wallet = wallet_factory(status=WalletStatus.FROZEN)
 
-    # Act
+    # Act: unfreeze wallet
     updated_wallet = unfreeze_wallet(wallet, now=get_fixed_timestamp)
 
-    # Assert
+    # Assert: wallet becomes ACTIVE
     assert updated_wallet.status == WalletStatus.ACTIVE
 
 
 def test_transition_active_to_closed(wallet_factory, get_fixed_timestamp):
-    # Arrange
+    # Arrange: wallet starts ACTIVE
     wallet = wallet_factory(status=WalletStatus.ACTIVE)
 
-    # Act
+    # Act: close wallet
     updated_wallet = close_wallet(wallet, now=get_fixed_timestamp)
 
-    # Assert
+    # Assert: wallet becomes CLOSED
     assert updated_wallet.status == WalletStatus.CLOSED
 
 
 def test_transition_frozen_to_closed(wallet_factory, get_fixed_timestamp):
-    # Arrange
+    # Arrange: wallet starts FROZEN
     wallet = wallet_factory(status=WalletStatus.FROZEN)
 
-    # Act
+    # Act: close wallet
     updated_wallet = close_wallet(wallet, now=get_fixed_timestamp)
 
-    # Assert
+    # Assert: wallet becomes CLOSED
     assert updated_wallet.status == WalletStatus.CLOSED
 
 
 def test_transition_preserves_data_integrity(wallet_factory, get_fixed_timestamp):
-    # Arrange
+    # Arrange: wallet with known id/balance/currency
     initial_balance = Decimal("123.45")
     test_id = "test-uuid-123"
     wallet = wallet_factory(
@@ -78,10 +78,10 @@ def test_transition_preserves_data_integrity(wallet_factory, get_fixed_timestamp
         status=WalletStatus.ACTIVE
     )
 
-    # Act
+    # Act: freeze wallet
     updated_wallet = freeze_wallet(wallet, now=get_fixed_timestamp)
 
-    # Assert
+    # Assert: ONLY status and updated_at changed
     # Verify ONLY status and updated_at changed
     assert updated_wallet.id == wallet.id
     assert updated_wallet.balance == wallet.balance
@@ -94,25 +94,25 @@ def test_transition_preserves_data_integrity(wallet_factory, get_fixed_timestamp
 # ------------------------------------------------
 
 def test_transition_closed_to_active_fails(wallet_factory, get_fixed_timestamp):
-    # Arrange
+    # Arrange: wallet starts CLOSED (terminal)
     wallet = wallet_factory(status=WalletStatus.CLOSED)
 
-    # Act
+    # Act: attempt invalid transition CLOSED -> ACTIVE
     updated_wallet = unfreeze_wallet(wallet, now=get_fixed_timestamp)
 
-    # Assert
+    # Assert: should remain CLOSED (transition ignored)
     # Should remain CLOSED (transition ignored)
     assert updated_wallet.status == WalletStatus.CLOSED
 
 
 def test_transition_closed_to_frozen_fails(wallet_factory, get_fixed_timestamp):
-    # Arrange
+    # Arrange: wallet starts CLOSED (terminal)
     wallet = wallet_factory(status=WalletStatus.CLOSED)
 
-    # Act
+    # Act: attempt invalid transition CLOSED -> FROZEN
     updated_wallet = freeze_wallet(wallet, now=get_fixed_timestamp)
 
-    # Assert
+    # Assert: should remain CLOSED (transition ignored)
     # Should remain CLOSED (transition ignored)
     assert updated_wallet.status == WalletStatus.CLOSED
 
@@ -122,33 +122,33 @@ def test_transition_closed_to_frozen_fails(wallet_factory, get_fixed_timestamp):
 # ------------------------------------------------
 
 def test_freeze_on_already_frozen_wallet(wallet_factory, get_fixed_timestamp):
-    # Arrange
+    # Arrange: wallet is already FROZEN
     wallet = wallet_factory(status=WalletStatus.FROZEN)
 
-    # Act
+    # Act: freeze again (idempotent)
     updated_wallet = freeze_wallet(wallet, now=get_fixed_timestamp)
 
-    # Assert
+    # Assert: remains FROZEN
     assert updated_wallet.status == WalletStatus.FROZEN
 
 
 def test_unfreeze_on_already_active_wallet(wallet_factory, get_fixed_timestamp):
-    # Arrange
+    # Arrange: wallet is already ACTIVE
     wallet = wallet_factory(status=WalletStatus.ACTIVE)
 
-    # Act
+    # Act: unfreeze again (no-op)
     updated_wallet = unfreeze_wallet(wallet, now=get_fixed_timestamp)
 
-    # Assert
+    # Assert: remains ACTIVE
     assert updated_wallet.status == WalletStatus.ACTIVE
 
 
 def test_close_on_already_closed_wallet(wallet_factory, get_fixed_timestamp):
-    # Arrange
+    # Arrange: wallet is already CLOSED
     wallet = wallet_factory(status=WalletStatus.CLOSED)
 
-    # Act
+    # Act: close again (idempotent)
     updated_wallet = close_wallet(wallet, now=get_fixed_timestamp)
 
-    # Assert
+    # Assert: remains CLOSED
     assert updated_wallet.status == WalletStatus.CLOSED

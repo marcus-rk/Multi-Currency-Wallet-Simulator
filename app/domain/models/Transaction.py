@@ -159,3 +159,28 @@ class Transaction:
             error_code=error_code,
             created_at=created_at,
         )
+
+    @staticmethod
+    def status_change(
+        transaction_id: str,
+        wallet_id: str,
+        currency: Currency,
+        created_at: datetime,
+        balance_after: Optional[Decimal] = None,
+    ) -> "Transaction":
+        return Transaction(
+            id=transaction_id,
+            type=TransactionType.STATUS_CHANGE,
+            source_wallet_id=wallet_id,
+            target_wallet_id=wallet_id,
+            amount=Decimal("0.00"),
+            currency=currency,
+            credited_amount=None,
+            credited_currency=None,
+            source_balance_after=balance_after,
+            target_balance_after=balance_after,
+            status=TransactionStatus.COMPLETED,
+            error_code=None,
+            created_at=created_at,
+        )
+

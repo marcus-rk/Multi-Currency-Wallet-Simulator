@@ -55,7 +55,7 @@
 					"description": "Basic reachability checks."
 				}
 			],
-			"description": "#### Index of endpoints and where they are tested (for quick dev scanning).\n\nGET /api/health/ -> 00 Health  \nPOST /api/wallets -> 01 Positive / Wallets / Create (source|target)  \nGET /api/wallets -> 01 Positive / Wallets / List  \nGET /api/wallets/:id -> 01 Positive / Wallets / Get (source)  \nPOST /api/wallets/:id/deposit -> 01 Positive / Transactions / Deposit (seed)  \nPOST /api/wallets/:id/withdraw -> 01 Positive / Transactions / Withdraw (ok)  \nGET /api/wallets/:id/transactions -> 01 Positive / Transactions / List  \nPOST /api/wallets/exchange -> 01 Positive / Exchange / Exchange (ok)\n\n**Negative coverage:**  \nPOST /api/wallets -> 02 Negative / Wallets / Create missing|invalid  \nGET /api/wallets/:id -> 02 Negative / Wallets / Get missing  \nPOST /api/wallets/:id/deposit -> 02 Negative / Transactions / Deposit invalid|missing currency  \nPOST /api/wallets/:id/withdraw -> 02 Negative / Transactions / Withdraw missing currency|insufficient funds  \nGET /api/wallets/:id/transactions -> 02 Negative / Transactions / List missing  \nPOST /api/wallets/exchange -> 02 Negative / Exchange / Missing fields|invalid amount|missing wallet"
+			"description": "#### Index of endpoints and where they are tested (for quick dev scanning).\n\nGET /api/health/ -> 00 Health  \nPOST /api/wallets -> 01 Positive / Wallets / Create (source|target)  \nGET /api/wallets -> 01 Positive / Wallets / List  \nGET /api/wallets/:id -> 01 Positive / Wallets / Get (source)  \nPOST /api/wallets/:id/freeze -> 01 Positive / Lifecycle / Freeze (lifecycle)  \nPOST /api/wallets/:id/unfreeze -> 01 Positive / Lifecycle / Unfreeze (lifecycle)  \nPOST /api/wallets/:id/close -> 01 Positive / Lifecycle / Close (lifecycle)  \nPOST /api/wallets/:id/deposit -> 01 Positive / Transactions / Deposit (seed)  \nPOST /api/wallets/:id/withdraw -> 01 Positive / Transactions / Withdraw (ok)  \nGET /api/wallets/:id/transactions -> 01 Positive / Transactions / List  \nPOST /api/wallets/exchange -> 01 Positive / Exchange / Exchange (ok)\n\n**Negative coverage:**  \nPOST /api/wallets -> 02 Negative / Wallets / Create missing|invalid  \nGET /api/wallets/:id -> 02 Negative / Wallets / Get missing  \nPOST /api/wallets/:id/freeze -> 02 Negative / Lifecycle / Freeze (missing|closed)  \nPOST /api/wallets/:id/unfreeze -> 02 Negative / Lifecycle / Unfreeze (missing|invalid)  \nPOST /api/wallets/:id/close -> 02 Negative / Lifecycle / Close (missing|closed)  \nPOST /api/wallets/:id/deposit -> 02 Negative / Transactions / Deposit invalid|missing currency  \nPOST /api/wallets/:id/withdraw -> 02 Negative / Transactions / Withdraw missing currency|insufficient funds  \nGET /api/wallets/:id/transactions -> 02 Negative / Transactions / List missing  \nPOST /api/wallets/exchange -> 02 Negative / Exchange / Missing fields|invalid amount|missing wallet"
 		},
 		{
 			"name": "01 Positive",
@@ -501,6 +501,175 @@
 						}
 					],
 					"description": "Exchange happy-path. Asserts invariants instead of exact credited amount (rate can vary)."
+				},
+				{
+					"name": "Lifecycle",
+					"item": [
+						{
+							"name": "Create (lifecycle)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('201 Created', () => pm.response.to.have.status(201));",
+											"const body = pm.response.json();",
+											"pm.test('wallet has id/status', () => {",
+											"  pm.expect(body).to.have.property('id');",
+											"  pm.expect(body).to.have.property('status');",
+											"});",
+											"pm.environment.set('wallet_lifecycle_id', body.id);"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"currency\": \"{{currency_source}}\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/wallets",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets"
+									]
+								},
+								"description": "Creates a dedicated wallet for lifecycle tests (wallet_lifecycle_id)."
+							},
+							"response": []
+						},
+						{
+							"name": "Freeze (lifecycle)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('200 OK', () => pm.response.to.have.status(200));",
+											"const body = pm.response.json();",
+											"pm.test('wallet is frozen', () => pm.expect(body.wallet.status).to.eql('FROZEN'));",
+											"pm.test('status change tx recorded', () => {",
+											"  pm.expect(body).to.have.property('transaction');",
+											"  pm.expect(body.transaction.type).to.eql('STATUS_CHANGE');",
+											"  pm.expect(body.transaction.status).to.eql('COMPLETED');",
+											"});"
+									]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/wallets/{{wallet_lifecycle_id}}/freeze",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"{{wallet_lifecycle_id}}",
+										"freeze"
+									]
+								},
+								"description": "Freeze lifecycle wallet."
+							},
+							"response": []
+						},
+						{
+							"name": "Unfreeze (lifecycle)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('200 OK', () => pm.response.to.have.status(200));",
+											"const body = pm.response.json();",
+											"pm.test('wallet is active', () => pm.expect(body.wallet.status).to.eql('ACTIVE'));",
+											"pm.test('status change tx recorded', () => {",
+											"  pm.expect(body).to.have.property('transaction');",
+											"  pm.expect(body.transaction.type).to.eql('STATUS_CHANGE');",
+											"  pm.expect(body.transaction.status).to.eql('COMPLETED');",
+											"});"
+									]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/wallets/{{wallet_lifecycle_id}}/unfreeze",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"{{wallet_lifecycle_id}}",
+										"unfreeze"
+									]
+								},
+								"description": "Unfreeze lifecycle wallet."
+							},
+							"response": []
+						},
+						{
+							"name": "Close (lifecycle)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('200 OK', () => pm.response.to.have.status(200));",
+											"const body = pm.response.json();",
+											"pm.test('wallet is closed', () => pm.expect(body.wallet.status).to.eql('CLOSED'));",
+											"pm.test('status change tx recorded', () => {",
+											"  pm.expect(body).to.have.property('transaction');",
+											"  pm.expect(body.transaction.type).to.eql('STATUS_CHANGE');",
+											"  pm.expect(body.transaction.status).to.eql('COMPLETED');",
+											"});",
+											"pm.environment.set('wallet_closed_id', pm.environment.get('wallet_lifecycle_id'));"
+									]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/wallets/{{wallet_lifecycle_id}}/close",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"{{wallet_lifecycle_id}}",
+										"close"
+									]
+								},
+								"description": "Close lifecycle wallet (also stores wallet_closed_id for negative tests)."
+							},
+							"response": []
+						}
+					],
+					"description": "Wallet lifecycle transitions (freeze/unfreeze/close)."
 				}
 			],
 			"description": "Happy-path API tests. Creates data needed for later steps and validates core successful flows."
@@ -1009,6 +1178,219 @@
 						}
 					],
 					"description": "Tests POST _/api/wallets/exchange_. **The backend may call its configured exchange provider**.\n\nAssertions check only stable outcomes (status, JSON shape, balances, transaction fields) because _rates vary_. exchange edge cases are covered in _unit/integration_ tests.\n\nExchange endpoint negative cases (400/404)."
+				},
+				{
+					"name": "Lifecycle",
+					"item": [
+						{
+							"name": "Freeze (missing)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+											"const body = pm.response.json();",
+											"pm.test('has error field', () => pm.expect(body).to.have.property('error'));"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/wallets/{{missing_wallet_id}}/freeze",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"{{missing_wallet_id}}",
+										"freeze"
+									]
+								},
+								"description": "Missing wallet -> 404."
+							},
+							"response": []
+						},
+						{
+							"name": "Freeze (closed)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('409 Conflict', () => pm.response.to.have.status(409));",
+											"const body = pm.response.json();",
+											"pm.test('has error field', () => pm.expect(body).to.have.property('error'));",
+											"pm.test('error is transition not allowed', () => pm.expect(body.error).to.eql('Wallet state transition not allowed'));"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/wallets/{{wallet_closed_id}}/freeze",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"{{wallet_closed_id}}",
+										"freeze"
+									]
+								},
+								"description": "Invalid transition: freezing a CLOSED wallet -> 409."
+							},
+							"response": []
+						},
+						{
+							"name": "Unfreeze (missing)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+											"const body = pm.response.json();",
+											"pm.test('has error field', () => pm.expect(body).to.have.property('error'));"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/wallets/{{missing_wallet_id}}/unfreeze",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"{{missing_wallet_id}}",
+										"unfreeze"
+									]
+								},
+								"description": "Missing wallet -> 404."
+							},
+							"response": []
+						},
+						{
+							"name": "Unfreeze (invalid - already active)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('409 Conflict', () => pm.response.to.have.status(409));",
+											"const body = pm.response.json();",
+											"pm.test('has error field', () => pm.expect(body).to.have.property('error'));",
+											"pm.test('error is transition not allowed', () => pm.expect(body.error).to.eql('Wallet state transition not allowed'));"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/wallets/{{wallet_dkk_id}}/unfreeze",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"{{wallet_dkk_id}}",
+										"unfreeze"
+									]
+								},
+								"description": "Invalid transition: unfreezing an already ACTIVE wallet -> 409."
+							},
+							"response": []
+						},
+						{
+							"name": "Close (missing)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+											"const body = pm.response.json();",
+											"pm.test('has error field', () => pm.expect(body).to.have.property('error'));"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/wallets/{{missing_wallet_id}}/close",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"{{missing_wallet_id}}",
+										"close"
+									]
+								},
+								"description": "Missing wallet -> 404."
+							},
+							"response": []
+						},
+						{
+							"name": "Close (closed)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('409 Conflict', () => pm.response.to.have.status(409));",
+											"const body = pm.response.json();",
+											"pm.test('has error field', () => pm.expect(body).to.have.property('error'));",
+											"pm.test('error is transition not allowed', () => pm.expect(body.error).to.eql('Wallet state transition not allowed'));"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/wallets/{{wallet_closed_id}}/close",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"{{wallet_closed_id}}",
+										"close"
+									]
+								},
+								"description": "Invalid transition: closing a CLOSED wallet -> 409."
+							},
+							"response": []
+						}
+					],
+					"description": "Negative lifecycle tests (404 missing wallet, 409 invalid transitions)."
 				}
 			],
 			"description": "Negative tests: invalid input + missing resources. Validates status codes and error payload contracts."

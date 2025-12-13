@@ -22,8 +22,8 @@
     <main class="container">
       <section class="stack" aria-label="Feedback">
         <p id="loading" class="muted" aria-live="polite"></p>
-        <div role="status" id="statusBox" class="banner banner--info"></div>
-        <div role="alert" id="errorBox" class="banner banner--error"></div>
+        <div role="status" id="statusBox" class="banner banner--info" data-testid="status-banner"></div>
+        <div role="alert" id="errorBox" class="banner banner--error" data-testid="error-banner"></div>
       </section>
 
       <div class="grid">
@@ -39,9 +39,9 @@
             <h2 class="card__title" id="walletStateHeading">Wallet state</h2>
             <div class="card__body">
               <div class="actions">
-                <button class="btn btn--secondary" type="button" id="freezeWallet">Freeze</button>
-                <button class="btn btn--secondary" type="button" id="unfreezeWallet">Unfreeze</button>
-                <button class="btn btn--secondary" type="button" id="closeWallet">Close</button>
+                <button class="btn btn--secondary" type="button" id="freezeWallet" data-testid="freeze-btn">Freeze</button>
+                <button class="btn btn--secondary" type="button" id="unfreezeWallet" data-testid="unfreeze-btn">Unfreeze</button>
+                <button class="btn btn--secondary" type="button" id="closeWallet" data-testid="close-btn">Close</button>
               </div>
             </div>
           </section>

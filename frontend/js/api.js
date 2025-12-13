@@ -1,3 +1,11 @@
+/**
+ * API helpers for the frontend.
+ *
+ * Responsibilities:
+ * - Provide a small JSON-first fetch wrapper (fetchJson)
+ * - Standardize error handling via ApiError (status + parsed response body when possible)
+ */
+
 import { API_BASE_URL } from "./config.js";
 
 export class ApiError extends Error {

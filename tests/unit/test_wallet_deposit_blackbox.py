@@ -33,7 +33,7 @@ from app.domain.rules.apply_deposit import apply_deposit
     Decimal("9999999999"),  # large value within valid partition
 ])
 def test_deposit_valid_amount_passes(wallet_factory, get_fixed_timestamp, amount: Decimal):
-    # Arrange
+    # Arrange: ACTIVE wallet with a known starting balance
     initial_balance = Decimal("100.00")
     wallet = wallet_factory(
         balance=initial_balance,
@@ -41,7 +41,7 @@ def test_deposit_valid_amount_passes(wallet_factory, get_fixed_timestamp, amount
         status=WalletStatus.ACTIVE,
     )
 
-    # Act
+    # Act: deposit a valid amount in the wallet currency
     _, transaction = apply_deposit(
         wallet=wallet,
         amount=amount,
@@ -50,7 +50,7 @@ def test_deposit_valid_amount_passes(wallet_factory, get_fixed_timestamp, amount
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: transaction succeeds without an error code
     expected = (
         TransactionStatus.COMPLETED,
         None,
@@ -69,7 +69,7 @@ def test_deposit_valid_amount_passes(wallet_factory, get_fixed_timestamp, amount
     Decimal("9999999999"),  # large value within valid partition
 ])
 def test_deposit_adds_correctly_to_balance(wallet_factory, get_fixed_timestamp, amount: Decimal):
-    # Arrange
+    # Arrange: ACTIVE wallet with a known starting balance
     initial_balance = Decimal("50.00")
     wallet = wallet_factory(
         balance=initial_balance,
@@ -77,7 +77,7 @@ def test_deposit_adds_correctly_to_balance(wallet_factory, get_fixed_timestamp, 
         status=WalletStatus.ACTIVE,
     )
 
-    # Act
+    # Act: deposit the amount
     updated_wallet,_ = apply_deposit(
         wallet=wallet,
         amount=amount,
@@ -86,7 +86,7 @@ def test_deposit_adds_correctly_to_balance(wallet_factory, get_fixed_timestamp, 
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: balance is increased by the deposited amount
     expected_balance = initial_balance + amount
     assert updated_wallet.balance == expected_balance
 
@@ -97,7 +97,7 @@ def test_deposit_adds_correctly_to_balance(wallet_factory, get_fixed_timestamp, 
     Currency.USD,
 ])
 def test_deposit_supported_currencies_pass(wallet_factory, get_fixed_timestamp, currency):
-    # Arrange
+    # Arrange: ACTIVE wallet with a supported currency
     initial_balance = Decimal("100.00")
     wallet = wallet_factory(
         balance=initial_balance,
@@ -105,7 +105,7 @@ def test_deposit_supported_currencies_pass(wallet_factory, get_fixed_timestamp, 
         status=WalletStatus.ACTIVE,
     )
 
-    # Act
+    # Act: deposit a valid amount in the same currency
     updated_wallet, transaction = apply_deposit(
         wallet=wallet,
         amount=Decimal("10.00"),  # any valid amount from amount EP
@@ -114,7 +114,7 @@ def test_deposit_supported_currencies_pass(wallet_factory, get_fixed_timestamp, 
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: wallet balance increases and transaction succeeds
     expected = (
         initial_balance + Decimal("10.00"),
         TransactionStatus.COMPLETED,
@@ -140,14 +140,14 @@ def test_deposit_supported_currencies_pass(wallet_factory, get_fixed_timestamp, 
     Decimal("0.00"),        # boundary between invalid and valid
 ])
 def test_deposit_invalid_amount_fails(wallet_factory, get_fixed_timestamp, amount: Decimal):
-    # Arrange
+    # Arrange: ACTIVE wallet and an invalid (non-positive) deposit amount
     wallet = wallet_factory(
         balance=Decimal("100.00"),
         currency=Currency.DKK,
         status=WalletStatus.ACTIVE,
     )
 
-    # Act
+    # Act: attempt the deposit
     _, transaction = apply_deposit(
         wallet=wallet,
         amount=amount,
@@ -156,7 +156,7 @@ def test_deposit_invalid_amount_fails(wallet_factory, get_fixed_timestamp, amoun
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: transaction fails with INVALID_AMOUNT
     expected = (
         TransactionStatus.FAILED,
         TransactionErrorCode.INVALID_AMOUNT,
@@ -176,7 +176,7 @@ def test_deposit_invalid_amount_fails(wallet_factory, get_fixed_timestamp, amoun
     Decimal("0.00"),        # boundary between invalid and valid
 ])
 def test_deposit_negative_amount_keeps_balance(wallet_factory, get_fixed_timestamp, amount: Decimal):
-    # Arrange
+    # Arrange: ACTIVE wallet with a known starting balance
     initial_balance = Decimal("100")
     wallet = wallet_factory(
         balance=initial_balance,
@@ -184,7 +184,7 @@ def test_deposit_negative_amount_keeps_balance(wallet_factory, get_fixed_timesta
         status=WalletStatus.ACTIVE,
     )
 
-    # Act
+    # Act: attempt an invalid deposit
     updated_wallet, _ = apply_deposit(
         wallet=wallet,
         amount=amount,
@@ -193,7 +193,7 @@ def test_deposit_negative_amount_keeps_balance(wallet_factory, get_fixed_timesta
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: wallet balance is unchanged on failed deposit
     assert updated_wallet.balance == initial_balance
 
 
@@ -206,14 +206,14 @@ def test_deposit_negative_amount_keeps_balance(wallet_factory, get_fixed_timesta
     WalletStatus.CLOSED,
 ])
 def test_deposit_on_non_active_wallet_fails(wallet_factory, get_fixed_timestamp, status: WalletStatus):
-    # Arrange
+    # Arrange: wallet is not ACTIVE (deposit should be blocked)
     wallet = wallet_factory(
         balance=Decimal("100.00"),
         currency=Currency.DKK,
         status=status,
     )
 
-    # Act
+    # Act: attempt deposit into non-active wallet
     _, transaction = apply_deposit(
         wallet=wallet,
         amount=Decimal("10.00"),
@@ -222,7 +222,7 @@ def test_deposit_on_non_active_wallet_fails(wallet_factory, get_fixed_timestamp,
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: transaction fails with INVALID_WALLET_STATE
     expected = (
         TransactionStatus.FAILED,
         TransactionErrorCode.INVALID_WALLET_STATE,
@@ -243,14 +243,14 @@ def test_deposit_on_non_active_wallet_fails(wallet_factory, get_fixed_timestamp,
     Currency.USD,   # supported but does not match wallet DKK
 ])
 def test_deposit_currency_mismatch_fails(wallet_factory, get_fixed_timestamp, deposit_currency):
-    # Arrange
+    # Arrange: ACTIVE DKK wallet but deposit currency differs (unsupported)
     wallet = wallet_factory(
         balance=Decimal("100.00"),
         currency=Currency.DKK,
         status=WalletStatus.ACTIVE,
     )
 
-    # Act
+    # Act: attempt deposit with mismatching currency
     _, transaction = apply_deposit(
         wallet=wallet,
         amount=Decimal("10.00"),
@@ -259,7 +259,7 @@ def test_deposit_currency_mismatch_fails(wallet_factory, get_fixed_timestamp, de
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: transaction fails with UNSUPPORTED_CURRENCY
     expected = (
         TransactionStatus.FAILED,
         TransactionErrorCode.UNSUPPORTED_CURRENCY,
@@ -281,7 +281,7 @@ def test_deposit_currency_mismatch_fails(wallet_factory, get_fixed_timestamp, de
     Decimal("1000000.00"),
 ])
 def test_deposit_returns_decimal_balance_and_amount(wallet_factory, get_fixed_timestamp, amount: Decimal):
-    # Arrange
+    # Arrange: ACTIVE wallet and a valid deposit amount
     initial_balance = Decimal("100.00")
     wallet = wallet_factory(
         balance=initial_balance,
@@ -289,7 +289,7 @@ def test_deposit_returns_decimal_balance_and_amount(wallet_factory, get_fixed_ti
         status=WalletStatus.ACTIVE,
     )
 
-    # Act
+    # Act: deposit and capture returned wallet/transaction objects
     updated_wallet, transaction = apply_deposit(
         wallet=wallet,
         amount=amount,
@@ -298,7 +298,7 @@ def test_deposit_returns_decimal_balance_and_amount(wallet_factory, get_fixed_ti
         now=get_fixed_timestamp,
     )
 
-    # Assert
+    # Assert: decimals remain Decimal (no float conversion)
     expected = (Decimal, Decimal)
     actual = (type(updated_wallet.balance), type(transaction.amount))
     assert actual == expected
@@ -316,14 +316,14 @@ def test_deposit_returns_decimal_balance_and_amount(wallet_factory, get_fixed_ti
     "",        # empty string
 ])
 def test_deposit_invalid_amount_type_raises_typeerror(wallet_factory, get_fixed_timestamp, amount):
-    # Arrange
+    # Arrange: ACTIVE wallet but amount is the wrong type
     wallet = wallet_factory(
         balance=Decimal("100.00"),
         currency=Currency.DKK,
         status=WalletStatus.ACTIVE,
     )
 
-    # Act / Assert
+    # Act + Assert: rule enforces Decimal typing
     with pytest.raises(TypeError):
         apply_deposit(
             wallet=wallet,
