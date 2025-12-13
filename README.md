@@ -119,7 +119,7 @@ docker build -t wallet-sim:latest .
 Run the container with a stable name:
 
 ```bash
-docker run --rm --name Current-Wallet-Sim -p 8080:5000 wallet-sim:latest
+docker run --name Current-Wallet-Sim -p 8080:5000 wallet-sim:latest
 ```
 
 Open the API at:
