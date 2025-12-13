@@ -19,7 +19,7 @@ This folder contains the **Postman collection + environment** used for API-level
 4. Run the collection top-to-bottom using the Collection Runner
 
 Base URL used by default:
-- `http://localhost:8080`
+- `http://127.0.0.1:8080`
 
 ## External FX usage (and why it’s not asserted everywhere)
 The **exchange endpoint** may call the configured FX provider. In Postman we avoid asserting the exact numeric rate (it can vary), and instead assert stable outcomes (status codes, JSON contract, recorded transaction, balance invariants). Deterministic FX parsing and failure mapping are validated in automated unit/integration tests via stubs.
