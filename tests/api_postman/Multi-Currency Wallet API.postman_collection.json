@@ -1,0 +1,1017 @@
+{
+	"info": {
+		"_postman_id": "bf50f609-b879-45ad-acc5-1e37122be9c4",
+		"name": "Multi-Currency Wallet API",
+		"description": "API testing collection for Multi-Currency Wallet Simulator.\n\nHow to run:\n- Run folder: 01 Positive (creates wallets + seeds data, then exercises happy paths).\n- Run folder: 02 Negative (invalid input + missing resources; relies on IDs created in 01).\n\nAssertions focus on:\n- Contract: HTTP status + JSON shape + key fields.\n- Business: key outcomes (balance changes, errors).\n- Audit: transaction object status/error_code when present.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "39301081"
+	},
+	"item": [
+		{
+			"name": "00 Coverage Map",
+			"item": [
+				{
+					"name": "Health",
+					"item": [
+						{
+							"name": "Health",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 200 OK",
+											"pm.test('200 OK', () => pm.response.to.have.status(200));",
+											"",
+											"// Contract: JSON with status",
+											"const body = pm.response.json();",
+											"pm.test('status field present', () => {",
+											"  pm.expect(body).to.have.property('status');",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/health/",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"health",
+										""
+									]
+								},
+								"description": "API reachability and basic health contract."
+							},
+							"response": []
+						}
+					],
+					"description": "Basic reachability checks."
+				}
+			],
+			"description": "#### Index of endpoints and where they are tested (for quick dev scanning).\n\nGET /api/health/ -> 00 Health  \nPOST /api/wallets -> 01 Positive / Wallets / Create (source|target)  \nGET /api/wallets -> 01 Positive / Wallets / List  \nGET /api/wallets/:id -> 01 Positive / Wallets / Get (source)  \nPOST /api/wallets/:id/deposit -> 01 Positive / Transactions / Deposit (seed)  \nPOST /api/wallets/:id/withdraw -> 01 Positive / Transactions / Withdraw (ok)  \nGET /api/wallets/:id/transactions -> 01 Positive / Transactions / List  \nPOST /api/wallets/exchange -> 01 Positive / Exchange / Exchange (ok)\n\n**Negative coverage:**  \nPOST /api/wallets -> 02 Negative / Wallets / Create missing|invalid  \nGET /api/wallets/:id -> 02 Negative / Wallets / Get missing  \nPOST /api/wallets/:id/deposit -> 02 Negative / Transactions / Deposit invalid|missing currency  \nPOST /api/wallets/:id/withdraw -> 02 Negative / Transactions / Withdraw missing currency|insufficient funds  \nGET /api/wallets/:id/transactions -> 02 Negative / Transactions / List missing  \nPOST /api/wallets/exchange -> 02 Negative / Exchange / Missing fields|invalid amount|missing wallet"
+		},
+		{
+			"name": "01 Positive",
+			"item": [
+				{
+					"name": "Wallets",
+					"item": [
+						{
+							"name": "Create (source)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 201 Created",
+											"pm.test('201 Created', () => pm.response.to.have.status(201));",
+											"",
+											"// Contract: wallet fields",
+											"const body = pm.response.json();",
+											"pm.test('wallet has core fields', () => {",
+											"  pm.expect(body).to.have.property('id');",
+											"  pm.expect(body).to.have.property('currency', pm.environment.get('currency_source'));",
+											"  pm.expect(body).to.have.property('balance');",
+											"  pm.expect(body).to.have.property('status');",
+											"});",
+											"",
+											"// Store: wallet id for later tests",
+											"pm.environment.set('wallet_dkk_id', body.id);"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"currency\": \"{{currency_source}}\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/wallets",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets"
+									]
+								},
+								"description": "Creates source wallet and stores wallet_dkk_id."
+							},
+							"response": []
+						},
+						{
+							"name": "Create (target)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 201 Created",
+											"pm.test('201 Created', () => pm.response.to.have.status(201));",
+											"",
+											"// Contract: wallet fields",
+											"const body = pm.response.json();",
+											"pm.test('wallet has id + currency', () => {",
+											"  pm.expect(body).to.have.property('id');",
+											"  pm.expect(body).to.have.property('currency', pm.environment.get('currency_target'));",
+											"});",
+											"",
+											"// Store: wallet id for later tests",
+											"pm.environment.set('wallet_usd_id', body.id);"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"currency\": \"{{currency_target}}\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/wallets",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets"
+									]
+								},
+								"description": "Creates target wallet and stores wallet_usd_id."
+							},
+							"response": []
+						},
+						{
+							"name": "List",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 200 OK",
+											"pm.test('200 OK', () => pm.response.to.have.status(200));",
+											"",
+											"// Contract: array payload",
+											"const body = pm.response.json();",
+											"pm.test('response is array', () => pm.expect(body).to.be.an('array'));",
+											"",
+											"// Business: created wallets appear in list",
+											"const ids = body.map(w => w.id);",
+											"pm.test('contains created ids', () => {",
+											"  pm.expect(ids).to.include(pm.environment.get('wallet_dkk_id'));",
+											"  pm.expect(ids).to.include(pm.environment.get('wallet_usd_id'));",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/wallets",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets"
+									]
+								},
+								"description": "Lists wallets; verifies the created wallet IDs are present."
+							},
+							"response": []
+						},
+						{
+							"name": "Get (source)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 200 OK",
+											"pm.test('200 OK', () => pm.response.to.have.status(200));",
+											"",
+											"// Contract: wallet shape",
+											"const body = pm.response.json();",
+											"pm.test('wallet fields', () => {",
+											"  pm.expect(body).to.have.property('id', pm.environment.get('wallet_dkk_id'));",
+											"  pm.expect(body).to.have.property('currency', pm.environment.get('currency_source'));",
+											"  pm.expect(body).to.have.property('balance');",
+											"  pm.expect(body).to.have.property('status');",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/wallets/{{wallet_dkk_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"{{wallet_dkk_id}}"
+									]
+								},
+								"description": "Fetches source wallet; validates core fields and currency."
+							},
+							"response": []
+						}
+					],
+					"description": "Wallet creation + retrieval endpoints. Stores wallet IDs in environment for later requests."
+				},
+				{
+					"name": "Transactions",
+					"item": [
+						{
+							"name": "Deposit (seed)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 200 OK",
+											"pm.test('200 OK', () => pm.response.to.have.status(200));",
+											"",
+											"// Contract: wallet + transaction objects",
+											"const body = pm.response.json();",
+											"pm.test('wallet + transaction present', () => {",
+											"  pm.expect(body).to.have.property('wallet');",
+											"  pm.expect(body).to.have.property('transaction');",
+											"});",
+											"",
+											"// Business: seeded balance equals amount_seed",
+											"pm.test('seeded balance applied', () => {",
+											"  pm.expect(body.wallet.id).to.eql(pm.environment.get('wallet_dkk_id'));",
+											"  pm.expect(body.wallet.balance).to.eql(pm.environment.get('amount_seed'));",
+											"});",
+											"",
+											"// Audit: deposit recorded",
+											"pm.test('deposit tx recorded', () => {",
+											"  pm.expect(body.transaction.type).to.eql('DEPOSIT');",
+											"  pm.expect(body.transaction.status).to.eql('COMPLETED');",
+											"  pm.expect(body.transaction.error_code).to.eql(null);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"amount\": \"{{amount_seed}}\",\n  \"currency\": \"{{currency_source}}\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/wallets/{{wallet_dkk_id}}/deposit",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"{{wallet_dkk_id}}",
+										"deposit"
+									]
+								},
+								"description": "Seeds the source wallet balance for later tests."
+							},
+							"response": []
+						},
+						{
+							"name": "Withdraw (ok)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 200 OK",
+											"pm.test('200 OK', () => pm.response.to.have.status(200));",
+											"",
+											"const body = pm.response.json();",
+											"",
+											"// Business: known balance after seed + withdraw (100.00 - 10.00 = 90.00)",
+											"pm.test('balance is 90.00', () => {",
+											"  pm.expect(body.wallet.balance).to.eql('90.00');",
+											"});",
+											"",
+											"// Audit: withdrawal recorded",
+											"pm.test('withdrawal tx recorded', () => {",
+											"  pm.expect(body.transaction.type).to.eql('WITHDRAWAL');",
+											"  pm.expect(body.transaction.status).to.eql('COMPLETED');",
+											"  pm.expect(body.transaction.error_code).to.eql(null);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"amount\": \"{{amount_withdraw_ok}}\",\n  \"currency\": \"{{currency_source}}\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/wallets/{{wallet_dkk_id}}/withdraw",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"{{wallet_dkk_id}}",
+										"withdraw"
+									]
+								},
+								"description": "Withdraws from the seeded wallet; validates balance decrease and recorded withdrawal."
+							},
+							"response": []
+						},
+						{
+							"name": "List (source)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 200 OK",
+											"pm.test('200 OK', () => pm.response.to.have.status(200));",
+											"",
+											"const body = pm.response.json();",
+											"pm.test('response is array', () => pm.expect(body).to.be.an('array'));",
+											"",
+											"// Contract: minimal tx shape",
+											"pm.test('each tx has id/type/status', () => {",
+											"  body.forEach(tx => {",
+											"    pm.expect(tx).to.have.property('id');",
+											"    pm.expect(tx).to.have.property('type');",
+											"    pm.expect(tx).to.have.property('status');",
+											"  });",
+											"});",
+											"",
+											"// Business: contains earlier operations",
+											"const types = body.map(t => t.type);",
+											"pm.test('contains DEPOSIT and WITHDRAWAL', () => {",
+											"  pm.expect(types).to.include('DEPOSIT');",
+											"  pm.expect(types).to.include('WITHDRAWAL');",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/wallets/{{wallet_dkk_id}}/transactions",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"{{wallet_dkk_id}}",
+										"transactions"
+									]
+								},
+								"description": "Lists transactions for the source wallet; validates minimal contract and presence of expected types."
+							},
+							"response": []
+						}
+					],
+					"description": "Deposit/withdraw operations and transaction listing. Validates wallet updates and transaction recording."
+				},
+				{
+					"name": "Exchange",
+					"item": [
+						{
+							"name": "Exchange (ok)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 200 OK",
+											"pm.test('200 OK', () => pm.response.to.have.status(200));",
+											"",
+											"const body = pm.response.json();",
+											"",
+											"// Contract: response shape",
+											"pm.test('has expected top-level fields', () => {",
+											"  pm.expect(body).to.have.property('source_wallet');",
+											"  pm.expect(body).to.have.property('target_wallet');",
+											"  pm.expect(body).to.have.property('transaction');",
+											"});",
+											"",
+											"// Business: known source balance after previous steps (90.00 - 5.00 = 85.00)",
+											"pm.test('source balance is 85.00', () => {",
+											"  pm.expect(body.source_wallet.balance).to.eql('85.00');",
+											"});",
+											"",
+											"// Audit: exchange recorded",
+											"pm.test('exchange tx recorded', () => {",
+											"  pm.expect(body.transaction.type).to.eql('EXCHANGE');",
+											"  pm.expect(body.transaction.status).to.eql('COMPLETED');",
+											"  pm.expect(body.transaction.error_code).to.eql(null);",
+											"});",
+											"",
+											"// Contract: credited amount is numeric + positive",
+											"pm.test('credited_amount is positive number', () => {",
+											"  const credited = Number(body.transaction.credited_amount);",
+											"  pm.expect(Number.isFinite(credited)).to.eql(true);",
+											"  pm.expect(credited).to.be.above(0);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"source_wallet_id\": \"{{wallet_dkk_id}}\",\n  \"target_wallet_id\": \"{{wallet_usd_id}}\",\n  \"amount\": \"{{amount_exchange}}\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/wallets/exchange",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"exchange"
+									]
+								},
+								"description": "Performs an exchange. The backend calls the rate provider; assertions are based on invariants (source debited, tx recorded) rather than an exact credited amount."
+							},
+							"response": []
+						}
+					],
+					"description": "Exchange happy-path. Asserts invariants instead of exact credited amount (rate can vary)."
+				}
+			],
+			"description": "Happy-path API tests. Creates data needed for later steps and validates core successful flows."
+		},
+		{
+			"name": "02 Negative",
+			"item": [
+				{
+					"name": "Wallets",
+					"item": [
+						{
+							"name": "Create missing currency",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 400",
+											"pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+											"",
+											"// Contract: error payload",
+											"const body = pm.response.json();",
+											"pm.test('has error field', () => pm.expect(body).to.have.property('error'));"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/wallets",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets"
+									]
+								},
+								"description": "Missing required field: currency."
+							},
+							"response": []
+						},
+						{
+							"name": "Create invalid currency",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 400",
+											"pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+											"",
+											"// Contract: error payload",
+											"const body = pm.response.json();",
+											"pm.test('has error field', () => pm.expect(body).to.have.property('error'));"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"currency\": \"XXX\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/wallets",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets"
+									]
+								},
+								"description": "Invalid currency enum."
+							},
+							"response": []
+						},
+						{
+							"name": "Get missing",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 404",
+											"pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+											"",
+											"// Contract: error payload",
+											"const body = pm.response.json();",
+											"pm.test('has error field', () => pm.expect(body).to.have.property('error'));"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/wallets/{{missing_wallet_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"{{missing_wallet_id}}"
+									]
+								},
+								"description": "Missing resource: unknown wallet id."
+							},
+							"response": []
+						}
+					],
+					"description": "Wallet endpoint negative cases (400/404)."
+				},
+				{
+					"name": "Transactions",
+					"item": [
+						{
+							"name": "Deposit invalid amount",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 400",
+											"pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+											"",
+											"// Contract: error payload",
+											"const body = pm.response.json();",
+											"pm.test('has error field', () => pm.expect(body).to.have.property('error'));"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"amount\": \"{{amount_invalid_text}}\",\n  \"currency\": \"{{currency_source}}\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/wallets/{{wallet_dkk_id}}/deposit",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"{{wallet_dkk_id}}",
+										"deposit"
+									]
+								},
+								"description": "Invalid amount: non-numeric."
+							},
+							"response": []
+						},
+						{
+							"name": "Deposit missing currency",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 400",
+											"pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+											"",
+											"// Contract: error payload",
+											"const body = pm.response.json();",
+											"pm.test('has error field', () => pm.expect(body).to.have.property('error'));"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"amount\": \"1.00\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/wallets/{{wallet_dkk_id}}/deposit",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"{{wallet_dkk_id}}",
+										"deposit"
+									]
+								},
+								"description": "Missing required field: currency."
+							},
+							"response": []
+						},
+						{
+							"name": "Withdraw missing currency",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 400",
+											"pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+											"",
+											"// Contract: error payload",
+											"const body = pm.response.json();",
+											"pm.test('has error field', () => pm.expect(body).to.have.property('error'));"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"amount\": \"1.00\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/wallets/{{wallet_dkk_id}}/withdraw",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"{{wallet_dkk_id}}",
+										"withdraw"
+									]
+								},
+								"description": "Missing required field: currency."
+							},
+							"response": []
+						},
+						{
+							"name": "Withdraw insufficient funds",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 422 Unprocessable Entity (business rule failure)",
+											"pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+											"",
+											"// Contract: response contains transaction info",
+											"const body = pm.response.json();",
+											"pm.test('transaction indicates failure', () => {",
+											"  pm.expect(body).to.have.property('transaction');",
+											"  pm.expect(body.transaction.status).to.eql('FAILED');",
+											"  pm.expect(body.transaction.error_code).to.eql('INSUFFICIENT_FUNDS');",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"amount\": \"{{amount_withdraw_too_much}}\",\n  \"currency\": \"{{currency_source}}\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/wallets/{{wallet_dkk_id}}/withdraw",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"{{wallet_dkk_id}}",
+										"withdraw"
+									]
+								},
+								"description": "Business rule: withdrawal exceeds available balance."
+							},
+							"response": []
+						},
+						{
+							"name": "List missing wallet",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 404",
+											"pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+											"",
+											"// Contract: error payload",
+											"const body = pm.response.json();",
+											"pm.test('has error field', () => pm.expect(body).to.have.property('error'));"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/wallets/{{missing_wallet_id}}/transactions",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"{{missing_wallet_id}}",
+										"transactions"
+									]
+								},
+								"description": "Missing resource: list transactions for unknown wallet."
+							},
+							"response": []
+						}
+					],
+					"description": "Deposit/withdraw/transaction-list negative cases (400/404/422)."
+				},
+				{
+					"name": "Exchange",
+					"item": [
+						{
+							"name": "Missing fields",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 400",
+											"pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+											"",
+											"// Contract: error payload",
+											"const body = pm.response.json();",
+											"pm.test('has error field', () => pm.expect(body).to.have.property('error'));"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"amount\": \"1.00\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/wallets/exchange",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"exchange"
+									]
+								},
+								"description": "Missing required fields for exchange."
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid amount",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 400",
+											"pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+											"",
+											"// Contract: error payload",
+											"const body = pm.response.json();",
+											"pm.test('has error field', () => pm.expect(body).to.have.property('error'));"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"source_wallet_id\": \"{{wallet_dkk_id}}\",\n  \"target_wallet_id\": \"{{wallet_usd_id}}\",\n  \"amount\": \"{{amount_invalid_text}}\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/wallets/exchange",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"exchange"
+									]
+								},
+								"description": "Invalid amount: non-numeric."
+							},
+							"response": []
+						},
+						{
+							"name": "Missing wallet",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"// Contract: 404",
+											"pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+											"",
+											"// Contract: error payload",
+											"const body = pm.response.json();",
+											"pm.test('has error field', () => pm.expect(body).to.have.property('error'));"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"source_wallet_id\": \"{{missing_wallet_id}}\",\n  \"target_wallet_id\": \"{{wallet_usd_id}}\",\n  \"amount\": \"{{amount_exchange}}\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/wallets/exchange",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"wallets",
+										"exchange"
+									]
+								},
+								"description": "Missing resource: unknown source wallet id."
+							},
+							"response": []
+						}
+					],
+					"description": "Tests POST _/api/wallets/exchange_. **The backend may call its configured exchange provider**.\n\nAssertions check only stable outcomes (status, JSON shape, balances, transaction fields) because _rates vary_. exchange edge cases are covered in _unit/integration_ tests.\n\nExchange endpoint negative cases (400/404)."
+				}
+			],
+			"description": "Negative tests: invalid input + missing resources. Validates status codes and error payload contracts."
+		}
+	]
+}
