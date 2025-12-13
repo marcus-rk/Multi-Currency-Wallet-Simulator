@@ -4,42 +4,56 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>Wallets</title>
-		<link rel="stylesheet" href="/css/main.css" />
+		<link rel="stylesheet" href="/css/styles.css" />
 	</head>
 	<body>
-		<header>
-			<h1>Multi-Currency Wallet Simulator</h1>
-			<nav>
-				<a href="/">Wallets</a>
-				<a href="/exchange.html">Exchange</a>
-			</nav>
+		<header class="header">
+			<div class="container container--header">
+				<div class="header__inner">
+				<h1 class="header__title">Multi-Currency Wallet Simulator</h1>
+				<nav class="nav" aria-label="Primary">
+					<a href="/" aria-current="page">Wallets</a>
+					<a href="/exchange.html">Exchange</a>
+				</nav>
+				</div>
+			</div>
 		</header>
 
-		<main>
-			<section aria-labelledby="createWalletHeading">
-				<h2 id="createWalletHeading">Create wallet</h2>
-				<form id="createWalletForm">
-					<div class="row">
-						<label for="walletCurrency">Currency</label>
-						<select id="walletCurrency" name="currency" required></select>
-					</div>
-					<button type="submit">Create wallet</button>
-				</form>
-			</section>
+		<main class="container">
+			<div class="grid">
+				<div class="stack">
+					<section class="card" aria-labelledby="createWalletHeading">
+						<h2 class="card__title" id="createWalletHeading">Create wallet</h2>
+						<div class="card__body">
+							<form id="createWalletForm">
+								<div class="field">
+									<label for="walletCurrency">Currency</label>
+									<select id="walletCurrency" name="currency" required></select>
+								</div>
+								<div class="actions">
+									<button class="btn btn--primary" type="submit">Create wallet</button>
+								</div>
+							</form>
+						</div>
+					</section>
 
-			<section aria-label="Feedback">
-				<p id="loading" aria-live="polite"></p>
-				<div role="status" id="statusBox"></div>
-				<div role="alert" id="errorBox"></div>
-			</section>
-
-			<section aria-labelledby="walletListHeading">
-				<h2 id="walletListHeading">Wallets</h2>
-				<div class="actions">
-					<button type="button" id="refreshWallets">Refresh</button>
+					<section class="stack" aria-label="Feedback">
+						<p id="loading" class="muted" aria-live="polite"></p>
+						<div role="status" id="statusBox" class="banner banner--info"></div>
+						<div role="alert" id="errorBox" class="banner banner--error"></div>
+					</section>
 				</div>
-				<div id="walletList"></div>
-			</section>
+
+				<section class="card" aria-labelledby="walletListHeading">
+					<h2 class="card__title" id="walletListHeading">Wallets</h2>
+					<div class="card__body">
+						<div class="actions mb-3">
+							<button class="btn btn--secondary" type="button" id="refreshWallets">Refresh</button>
+						</div>
+						<div id="walletList"></div>
+					</div>
+				</section>
+			</div>
 		</main>
 
 		<script type="module" src="/js/index.js"></script>

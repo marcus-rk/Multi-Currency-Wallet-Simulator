@@ -4,66 +4,97 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Wallet</title>
-    <link rel="stylesheet" href="/css/main.css" />
+    <link rel="stylesheet" href="/css/styles.css" />
   </head>
   <body>
-    <header>
-      <h1>Wallet details</h1>
-      <nav>
-        <a href="/">Wallets</a>
-        <a href="/exchange.html">Exchange</a>
-      </nav>
+    <header class="header">
+      <div class="container container--header">
+        <div class="header__inner">
+        <h1 class="header__title">Wallet details</h1>
+        <nav class="nav" aria-label="Primary">
+          <a href="/">Wallets</a>
+          <a href="/exchange.html">Exchange</a>
+        </nav>
+        </div>
+      </div>
     </header>
 
-    <main>
-      <section aria-label="Feedback">
-        <p id="loading" aria-live="polite"></p>
-        <div role="status" id="statusBox"></div>
-        <div role="alert" id="errorBox"></div>
+    <main class="container">
+      <section class="stack" aria-label="Feedback">
+        <p id="loading" class="muted" aria-live="polite"></p>
+        <div role="status" id="statusBox" class="banner banner--info"></div>
+        <div role="alert" id="errorBox" class="banner banner--error"></div>
       </section>
 
-      <section aria-labelledby="walletInfoHeading">
-        <h2 id="walletInfoHeading">Wallet</h2>
-        <div id="walletInfo"></div>
-      </section>
+      <div class="grid">
+        <div class="stack">
+          <section class="card" aria-labelledby="walletInfoHeading">
+            <h2 class="card__title" id="walletInfoHeading">Wallet</h2>
+            <div class="card__body">
+              <div id="walletInfo"></div>
+            </div>
+          </section>
 
-      <section aria-labelledby="depositHeading">
-        <h2 id="depositHeading">Deposit</h2>
-        <form id="depositForm">
-          <div class="row">
-            <label for="depositAmount">Amount</label>
-            <input id="depositAmount" name="amount" type="number" step="0.01" min="0" inputmode="decimal" required />
-          </div>
-          <div class="row">
-            <label for="depositCurrency">Currency</label>
-            <select id="depositCurrency" name="currency" required></select>
-          </div>
-          <button type="submit">Deposit</button>
-        </form>
-      </section>
+          <section class="card" aria-labelledby="walletStateHeading">
+            <h2 class="card__title" id="walletStateHeading">Wallet state</h2>
+            <div class="card__body">
+              <div class="actions">
+                <button class="btn btn--secondary" type="button" id="freezeWallet">Freeze</button>
+                <button class="btn btn--secondary" type="button" id="unfreezeWallet">Unfreeze</button>
+                <button class="btn btn--secondary" type="button" id="closeWallet">Close</button>
+              </div>
+            </div>
+          </section>
 
-      <section aria-labelledby="withdrawHeading">
-        <h2 id="withdrawHeading">Withdraw</h2>
-        <form id="withdrawForm">
-          <div class="row">
-            <label for="withdrawAmount">Amount</label>
-            <input id="withdrawAmount" name="amount" type="number" step="0.01" min="0" inputmode="decimal" required />
-          </div>
-          <div class="row">
-            <label for="withdrawCurrency">Currency</label>
-            <select id="withdrawCurrency" name="currency" required></select>
-          </div>
-          <button type="submit">Withdraw</button>
-        </form>
-      </section>
+          <section class="card" aria-labelledby="depositHeading">
+            <h2 class="card__title" id="depositHeading">Deposit</h2>
+            <div class="card__body">
+              <form id="depositForm">
+                <div class="field">
+                  <label for="depositAmount">Amount</label>
+                  <input id="depositAmount" name="amount" type="number" step="0.01" min="0" inputmode="decimal" required />
+                </div>
+                <div class="field">
+                  <label for="depositCurrency">Currency</label>
+                  <select id="depositCurrency" name="currency" required></select>
+                </div>
+                <div class="actions">
+                  <button class="btn btn--primary" type="submit">Deposit</button>
+                </div>
+              </form>
+            </div>
+          </section>
 
-      <section aria-labelledby="transactionsHeading">
-        <h2 id="transactionsHeading">Transactions</h2>
-        <div class="actions">
-          <button type="button" id="refreshWallet">Refresh</button>
+          <section class="card" aria-labelledby="withdrawHeading">
+            <h2 class="card__title" id="withdrawHeading">Withdraw</h2>
+            <div class="card__body">
+              <form id="withdrawForm">
+                <div class="field">
+                  <label for="withdrawAmount">Amount</label>
+                  <input id="withdrawAmount" name="amount" type="number" step="0.01" min="0" inputmode="decimal" required />
+                </div>
+                <div class="field">
+                  <label for="withdrawCurrency">Currency</label>
+                  <select id="withdrawCurrency" name="currency" required></select>
+                </div>
+                <div class="actions">
+                  <button class="btn btn--primary" type="submit">Withdraw</button>
+                </div>
+              </form>
+            </div>
+          </section>
         </div>
-        <div id="transactions"></div>
-      </section>
+
+        <section class="card" aria-labelledby="transactionsHeading">
+          <h2 class="card__title" id="transactionsHeading">Transactions</h2>
+          <div class="card__body">
+            <div class="actions mb-3">
+              <button class="btn btn--secondary" type="button" id="refreshWallet">Refresh</button>
+            </div>
+            <div id="transactions"></div>
+          </div>
+        </section>
+      </div>
     </main>
 
     <script type="module" src="/js/wallet.js"></script>

@@ -1,0 +1,317 @@
+/*
+  Multi-Currency Wallet Simulator — Minimal UI (SRS-aligned)
+
+  Design goals
+  - Lightweight, modern, accessible, Lighthouse-friendly
+  - No external CSS libs, no font downloads
+  - Mobile-first, responsive grid at >= 900px
+  - Clear states: hover, focus-visible, disabled, success, error, warning
+*/
+
+:root {
+  /* Typography */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --text: #0f172a;
+  --text-muted: #334155;
+
+  /* Palette */
+  --bg: #f1f5f9;
+  --card: #ffffff;
+  --border: #dbe2ea;
+  --accent: #2563eb;
+
+  --success: #166534;
+  --success-bg: #dcfce7;
+  --error: #b91c1c;
+  --error-bg: #fee2e2;
+  --warning: #92400e;
+  --warning-bg: #fef3c7;
+
+  /* Spacing & shape */
+  --space-1: 6px;
+  --space-2: 10px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --radius: 12px;
+
+  /* Shadow */
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.08), 0 6px 16px rgba(15, 23, 42, 0.06);
+
+  /* Focus */
+  --focus: 2px solid rgba(37, 99, 235, 0.9);
+}
+
+* { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  line-height: 1.55;
+  color: var(--text);
+  background: var(--bg);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover { text-decoration: underline; }
+
+:focus-visible {
+  outline: var(--focus);
+  outline-offset: 2px;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-3);
+}
+
+.container--header { padding: 0; }
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+}
+
+.header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.header__title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.nav {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.nav a {
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.nav a:hover { background: rgba(37, 99, 235, 0.08); }
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+@media (min-width: 900px) {
+  .grid { grid-template-columns: 1fr 1fr; }
+}
+
+.stack { display: grid; gap: var(--space-3); }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.card__title {
+  margin: 0;
+  padding: var(--space-3);
+  font-size: 1.05rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+}
+
+.card__body { padding: var(--space-3); }
+
+.field { margin-bottom: var(--space-3); }
+
+.field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--space-1);
+}
+
+.field input,
+.field select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+}
+
+.field input::placeholder { color: var(--text-muted); }
+
+.field input:focus-visible,
+.field select:focus-visible {
+  outline: var(--focus);
+  outline-offset: 2px;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.mb-3 { margin-bottom: var(--space-3); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn:hover { border-color: rgba(37, 99, 235, 0.35); }
+
+.btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.btn--primary:hover { filter: brightness(0.95); }
+
+.btn--secondary {
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.20);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pill--success { background: var(--success-bg); color: var(--success); border-color: rgba(22, 101, 52, 0.25); }
+.pill--warning { background: var(--warning-bg); color: var(--warning); border-color: rgba(146, 64, 14, 0.25); }
+.pill--neutral { background: rgba(15, 23, 42, 0.04); color: var(--text); }
+.pill--error { background: var(--error-bg); color: var(--error); border-color: rgba(185, 28, 28, 0.25); }
+
+.banner {
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: var(--space-2) var(--space-3);
+  background: rgba(15, 23, 42, 0.03);
+  border-left: 4px solid rgba(15, 23, 42, 0.25);
+  white-space: pre-wrap;
+}
+
+.banner--info { border-left-color: rgba(37, 99, 235, 0.75); }
+.banner--success { background: var(--success-bg); border-left-color: rgba(22, 101, 52, 0.7); }
+.banner--error { background: var(--error-bg); border-left-color: rgba(185, 28, 28, 0.75); }
+.banner--warning { background: var(--warning-bg); border-left-color: rgba(146, 64, 14, 0.75); }
+
+.banner:empty { display: none; }
+
+.muted { color: var(--text-muted); }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.table th,
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table thead th {
+  background: rgba(37, 99, 235, 0.06);
+  font-weight: 700;
+}
+
+.table tbody tr:nth-child(even) { background: rgba(15, 23, 42, 0.02); }
+.table tbody tr:hover { background: rgba(37, 99, 235, 0.06); }
+
+.kv {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.kv__row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: var(--space-2);
+}
+
+@media (max-width: 520px) {
+  .kv__row { grid-template-columns: 1fr; }
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+.wallet-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.wallet-item {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.wallet-item__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.wallet-item__meta {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.wallet-item__balance {
+  font-size: 1.1rem;
+  font-weight: 700;
+}

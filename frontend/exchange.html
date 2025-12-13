@@ -4,47 +4,59 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Exchange</title>
-    <link rel="stylesheet" href="/css/main.css" />
+    <link rel="stylesheet" href="/css/styles.css" />
   </head>
   <body>
-    <header>
-      <h1>Exchange</h1>
-      <nav>
-        <a href="/">Wallets</a>
-        <a href="/exchange.html">Exchange</a>
-      </nav>
+    <header class="header">
+      <div class="container container--header">
+        <div class="header__inner">
+        <h1 class="header__title">Exchange</h1>
+        <nav class="nav" aria-label="Primary">
+          <a href="/">Wallets</a>
+          <a href="/exchange.html" aria-current="page">Exchange</a>
+        </nav>
+        </div>
+      </div>
     </header>
 
-    <main>
-      <section aria-label="Feedback">
-        <p id="loading" aria-live="polite"></p>
-        <div role="status" id="statusBox"></div>
-        <div role="alert" id="errorBox"></div>
+    <main class="container">
+      <section class="stack" aria-label="Feedback">
+        <p id="loading" class="muted" aria-live="polite"></p>
+        <div role="status" id="statusBox" class="banner banner--info"></div>
+        <div role="alert" id="errorBox" class="banner banner--error"></div>
       </section>
 
-      <section aria-labelledby="exchangeHeading">
-        <h2 id="exchangeHeading">Run exchange</h2>
-        <form id="exchangeForm">
-          <div class="row">
-            <label for="sourceWallet">Source wallet</label>
-            <select id="sourceWallet" name="source_wallet_id" required></select>
+      <div class="grid">
+        <section class="card" aria-labelledby="exchangeHeading">
+          <h2 class="card__title" id="exchangeHeading">Run exchange</h2>
+          <div class="card__body">
+            <form id="exchangeForm">
+              <div class="field">
+                <label for="sourceWallet">Source wallet</label>
+                <select id="sourceWallet" name="source_wallet_id" required></select>
+              </div>
+              <div class="field">
+                <label for="targetWallet">Target wallet</label>
+                <select id="targetWallet" name="target_wallet_id" required></select>
+              </div>
+              <div class="field">
+                <label for="exchangeAmount">Amount</label>
+                <input id="exchangeAmount" name="amount" type="number" step="0.01" min="0" inputmode="decimal" required />
+              </div>
+              <div class="actions">
+                <button class="btn btn--primary" type="submit">Exchange</button>
+              </div>
+            </form>
           </div>
-          <div class="row">
-            <label for="targetWallet">Target wallet</label>
-            <select id="targetWallet" name="target_wallet_id" required></select>
-          </div>
-          <div class="row">
-            <label for="exchangeAmount">Amount</label>
-            <input id="exchangeAmount" name="amount" type="number" step="0.01" min="0" inputmode="decimal" required />
-          </div>
-          <button type="submit">Exchange</button>
-        </form>
-      </section>
+        </section>
 
-      <section aria-labelledby="exchangeResultHeading">
-        <h2 id="exchangeResultHeading">Result</h2>
-        <div id="exchangeResult"></div>
-      </section>
+        <section class="card" aria-labelledby="exchangeResultHeading">
+          <h2 class="card__title" id="exchangeResultHeading">Result</h2>
+          <div class="card__body">
+            <div id="exchangeResult"></div>
+          </div>
+        </section>
+      </div>
     </main>
 
     <script type="module" src="/js/exchange.js"></script>

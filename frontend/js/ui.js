@@ -146,5 +146,5 @@ export function renderTable({ columns, rows }) {
   const tbody = `<tbody>${rows
     .map((row) => `<tr>${columns.map((c) => `<td>${c.cell(row) ?? ""}</td>`).join("")}</tr>`)
     .join("")}</tbody>`;
-  return `<table>${thead}${tbody}</table>`;
+  return `<table class=\"table\">${thead}${tbody}</table>`;
 }

@@ -29,14 +29,34 @@ function populateCurrencySelect(selectEl, selectedValue) {
   }).join("");
 }
 
+function walletStatusPill(status) {
+  const s = String(status || "");
+  if (s === "ACTIVE") return `<span class="pill pill--success">${escapeHtml(s)}</span>`;
+  if (s === "FROZEN") return `<span class="pill pill--warning">${escapeHtml(s)}</span>`;
+  if (s === "CLOSED") return `<span class="pill pill--neutral">${escapeHtml(s)}</span>`;
+  return `<span class="pill pill--neutral">${escapeHtml(s)}</span>`;
+}
+
+function txTypePill(type) {
+  const t = String(type || "");
+  return `<span class="pill pill--neutral">${escapeHtml(t)}</span>`;
+}
+
+function txStatusPill(status) {
+  const s = String(status || "");
+  if (s === "COMPLETED") return `<span class="pill pill--success">${escapeHtml(s)}</span>`;
+  if (s === "FAILED") return `<span class="pill pill--error">${escapeHtml(s)}</span>`;
+  return `<span class="pill pill--neutral">${escapeHtml(s)}</span>`;
+}
+
 function renderWalletInfo(wallet) {
   return `
     <dl class="kv">
-      <div><dt>ID</dt><dd>${escapeHtml(wallet.id)}</dd></div>
-      <div><dt>Currency</dt><dd>${escapeHtml(wallet.currency)}</dd></div>
-      <div><dt>Balance</dt><dd>${escapeHtml(formatDecimal(wallet.balance, 2))}</dd></div>
-      <div><dt>Status</dt><dd>${escapeHtml(wallet.status)}</dd></div>
-      <div><dt>Updated</dt><dd>${escapeHtml(wallet.updated_at)}</dd></div>
+      <div class="kv__row"><dt>ID</dt><dd><code class="mono">${escapeHtml(wallet.id)}</code></dd></div>
+      <div class="kv__row"><dt>Currency</dt><dd>${escapeHtml(wallet.currency)}</dd></div>
+      <div class="kv__row"><dt>Balance</dt><dd>${escapeHtml(formatDecimal(wallet.balance, 2))}</dd></div>
+      <div class="kv__row"><dt>Status</dt><dd>${walletStatusPill(wallet.status)}</dd></div>
+      <div class="kv__row"><dt>Updated</dt><dd><span class="mono">${escapeHtml(wallet.updated_at)}</span></dd></div>
     </dl>
   `;
 }
@@ -48,14 +68,20 @@ function renderTransactions(transactions) {
 
   return renderTable({
     columns: [
-      { header: "Type", cell: (t) => escapeHtml(t.type) },
-      { header: "Amount", cell: (t) => escapeHtml(formatDecimal(t.amount, 2)) },
-      { header: "Currency", cell: (t) => escapeHtml(t.currency) },
-      { header: "Credited", cell: (t) => (t.credited_amount ? escapeHtml(formatDecimal(t.credited_amount, 2)) : "") },
-      { header: "Credited currency", cell: (t) => (t.credited_currency ? escapeHtml(t.credited_currency) : "") },
-      { header: "Status", cell: (t) => escapeHtml(t.status) },
-      { header: "Error code", cell: (t) => (t.error_code ? escapeHtml(t.error_code) : "") },
-      { header: "Created", cell: (t) => escapeHtml(t.created_at) },
+      { header: "Type", cell: (t) => txTypePill(t.type) },
+      {
+        header: "Amount",
+        cell: (t) => {
+          const base = `${formatDecimal(t.amount, 2)} ${t.currency}`;
+          const credited = t.credited_amount && t.credited_currency ? `${formatDecimal(t.credited_amount, 2)} ${t.credited_currency}` : "";
+          return credited
+            ? `${escapeHtml(base)}<div class="muted">Credited: ${escapeHtml(credited)}</div>`
+            : escapeHtml(base);
+        },
+      },
+      { header: "Status", cell: (t) => txStatusPill(t.status) },
+      { header: "Time", cell: (t) => `<span class="mono">${escapeHtml(t.created_at)}</span>` },
+      { header: "Error", cell: (t) => (t.error_code ? `<code class="mono">${escapeHtml(t.error_code)}</code>` : "") },
     ],
     rows: transactions,
   });
