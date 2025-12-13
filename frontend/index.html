@@ -1,1 +1,47 @@
-<html lang="en"></html>
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Wallets</title>
+		<link rel="stylesheet" href="/css/main.css" />
+	</head>
+	<body>
+		<header>
+			<h1>Multi-Currency Wallet Simulator</h1>
+			<nav>
+				<a href="/">Wallets</a>
+				<a href="/exchange.html">Exchange</a>
+			</nav>
+		</header>
+
+		<main>
+			<section aria-labelledby="createWalletHeading">
+				<h2 id="createWalletHeading">Create wallet</h2>
+				<form id="createWalletForm">
+					<div class="row">
+						<label for="walletCurrency">Currency</label>
+						<select id="walletCurrency" name="currency" required></select>
+					</div>
+					<button type="submit">Create wallet</button>
+				</form>
+			</section>
+
+			<section aria-label="Feedback">
+				<p id="loading" aria-live="polite"></p>
+				<div role="status" id="statusBox"></div>
+				<div role="alert" id="errorBox"></div>
+			</section>
+
+			<section aria-labelledby="walletListHeading">
+				<h2 id="walletListHeading">Wallets</h2>
+				<div class="actions">
+					<button type="button" id="refreshWallets">Refresh</button>
+				</div>
+				<div id="walletList"></div>
+			</section>
+		</main>
+
+		<script type="module" src="/js/index.js"></script>
+	</body>
+</html>

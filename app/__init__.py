@@ -34,10 +34,12 @@ def create_app(test_config: dict = None) -> Flask:
 
     # --- Blueprint registration ---
     from .routes.health import health_bp
+    from .routes.frontend import frontend_bp
     from .routes.wallets import wallets_bp
     from .routes.operations import operations_bp
     from .routes.transactions import transactions_bp
     
+    app.register_blueprint(frontend_bp)
     app.register_blueprint(health_bp)
     app.register_blueprint(wallets_bp)
     app.register_blueprint(operations_bp)

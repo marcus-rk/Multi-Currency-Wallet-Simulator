@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Exchange</title>
+    <link rel="stylesheet" href="/css/main.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Exchange</h1>
+      <nav>
+        <a href="/">Wallets</a>
+        <a href="/exchange.html">Exchange</a>
+      </nav>
+    </header>
+
+    <main>
+      <section aria-label="Feedback">
+        <p id="loading" aria-live="polite"></p>
+        <div role="status" id="statusBox"></div>
+        <div role="alert" id="errorBox"></div>
+      </section>
+
+      <section aria-labelledby="exchangeHeading">
+        <h2 id="exchangeHeading">Run exchange</h2>
+        <form id="exchangeForm">
+          <div class="row">
+            <label for="sourceWallet">Source wallet</label>
+            <select id="sourceWallet" name="source_wallet_id" required></select>
+          </div>
+          <div class="row">
+            <label for="targetWallet">Target wallet</label>
+            <select id="targetWallet" name="target_wallet_id" required></select>
+          </div>
+          <div class="row">
+            <label for="exchangeAmount">Amount</label>
+            <input id="exchangeAmount" name="amount" type="number" step="0.01" min="0" inputmode="decimal" required />
+          </div>
+          <button type="submit">Exchange</button>
+        </form>
+      </section>
+
+      <section aria-labelledby="exchangeResultHeading">
+        <h2 id="exchangeResultHeading">Result</h2>
+        <div id="exchangeResult"></div>
+      </section>
+    </main>
+
+    <script type="module" src="/js/exchange.js"></script>
+  </body>
+</html>

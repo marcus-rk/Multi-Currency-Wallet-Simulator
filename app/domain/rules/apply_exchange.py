@@ -1,5 +1,5 @@
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional, Tuple
 
 from ..models.Transaction import Transaction
@@ -22,7 +22,8 @@ def apply_exchange(
     error_code = _validate_exchange(source_wallet, target_wallet, amount, fx_rate)
 
     if error_code is None:
-        credited_amount = amount * fx_rate  # TODO: apply rounding rule here later
+        # SRS v2.1: Round half up to 2 decimal places for credited amounts.
+        credited_amount = (amount * fx_rate).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         source_balance_after = source_wallet.balance - amount
         target_balance_after = target_wallet.balance + credited_amount
 

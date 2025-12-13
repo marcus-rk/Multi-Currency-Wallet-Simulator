@@ -124,9 +124,19 @@ Run the container with a stable name:
 docker run --name Currency-Wallet-Sim -p 8080:5000 wallet-sim:latest
 ```
 
+Open the UI at:
+
+- `http://127.0.0.1:8080/`
+
 Open the API at:
 
-- `http://127.0.0.1:8080`
+- `http://127.0.0.1:8080/api/wallets`
+
+If you pulled new changes, rebuild the image first:
+
+```bash
+docker build -t wallet-sim:latest .
+```
 
 Run detached (background):
 
