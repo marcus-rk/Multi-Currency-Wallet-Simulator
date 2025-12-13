@@ -39,7 +39,7 @@ This project is focused on making a small **multi-currency wallet simulator** fo
 Top-level special files:
 
 - `.gitignore` – ignore virtualenv, instance DB, test reports, etc.
-- `.env`, `.flaskenv` – local environment and Flask configuration
+- `.env` – local environment 
 - `requirements.txt` – Python dependencies
 - `README.md` – main project documentation (this file)
 
@@ -104,6 +104,39 @@ Run integration tests with coverage:
 
 ```bash
 pytest -m integration --cov=app --cov-report=term-missing
+```
+
+---
+
+## Docker (Build + Run)
+
+Build the image:
+
+```bash
+docker build -t wallet-sim:latest .
+```
+
+Run the container with a stable name:
+
+```bash
+docker run --rm --name Current-Wallet-Sim -p 8080:5000 wallet-sim:latest
+```
+
+Open the API at:
+
+- `http://127.0.0.1:8080`
+
+Run detached (background):
+
+```bash
+docker run -d --name Current-Wallet-Sim -p 8080:5000 wallet-sim:latest
+```
+
+Stop and remove (when running detached):
+
+```bash
+docker stop Current-Wallet-Sim
+docker rm Current-Wallet-Sim
 ```
 
 ---
