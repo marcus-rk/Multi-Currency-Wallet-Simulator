@@ -20,6 +20,14 @@ const els = {
   refreshButton: document.getElementById("refreshWallets"),
 };
 
+function walletStatusPill(status) {
+  const s = String(status || "");
+  if (s === "ACTIVE") return `<span class="pill pill--success">${escapeHtml(s)}</span>`;
+  if (s === "FROZEN") return `<span class="pill pill--frozen">${escapeHtml(s)}</span>`;
+  if (s === "CLOSED") return `<span class="pill pill--closed">${escapeHtml(s)}</span>`;
+  return `<span class="pill pill--neutral">${escapeHtml(s)}</span>`;
+}
+
 function populateCurrencySelect(selectEl) {
   selectEl.innerHTML = SUPPORTED_CURRENCIES.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
 }
@@ -37,11 +45,7 @@ function renderWallets(wallets) {
       },
       { header: "Currency", cell: (w) => escapeHtml(w.currency) },
       { header: "Balance", cell: (w) => escapeHtml(formatDecimal(w.balance, 2)) },
-      { header: "Status", cell: (w) => escapeHtml(w.status) },
-      {
-        header: "Open",
-        cell: (w) => `<a href="/wallet.html?id=${encodeURIComponent(w.id)}">Open</a>`,
-      },
+      { header: "Status", cell: (w) => walletStatusPill(w.status) },
     ],
     rows: wallets,
   });

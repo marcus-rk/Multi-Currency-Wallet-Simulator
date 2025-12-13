@@ -20,6 +20,8 @@ const els = {
   result: document.getElementById("exchangeResult"),
 };
 
+const EMPTY_RESULT_MARKER = "data-empty-state";
+
 function walletLabel(wallet) {
   return `${wallet.id} (${wallet.currency} ${formatDecimal(wallet.balance, 2)})`;
 }
@@ -33,8 +35,8 @@ function populateWalletSelect(selectEl, wallets) {
 function walletStatusPill(status) {
   const s = String(status || "");
   if (s === "ACTIVE") return `<span class=\"pill pill--success\">${escapeHtml(s)}</span>`;
-  if (s === "FROZEN") return `<span class=\"pill pill--warning\">${escapeHtml(s)}</span>`;
-  if (s === "CLOSED") return `<span class=\"pill pill--neutral\">${escapeHtml(s)}</span>`;
+  if (s === "FROZEN") return `<span class=\"pill pill--frozen\">${escapeHtml(s)}</span>`;
+  if (s === "CLOSED") return `<span class=\"pill pill--closed\">${escapeHtml(s)}</span>`;
   return `<span class=\"pill pill--neutral\">${escapeHtml(s)}</span>`;
 }
 
@@ -100,7 +102,19 @@ async function loadWallets() {
       els.target.selectedIndex = 1;
     }
 
-    els.result.innerHTML = wallets.length === 0 ? "<p>Create wallets first.</p>" : "";
+    if (wallets.length === 0) {
+      els.result.innerHTML = `<p ${EMPTY_RESULT_MARKER}="true">Create wallets first.</p>`;
+    } else {
+      const onlyChild = els.result?.firstElementChild;
+      const isOnlyEmptyState =
+        onlyChild &&
+        onlyChild.getAttribute(EMPTY_RESULT_MARKER) === "true" &&
+        els.result.childElementCount === 1;
+
+      if (isOnlyEmptyState) {
+        els.result.innerHTML = "";
+      }
+    }
   } catch (err) {
     setError(els.error, formatError(err));
   } finally {

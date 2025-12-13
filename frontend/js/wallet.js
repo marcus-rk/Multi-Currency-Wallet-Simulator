@@ -48,8 +48,8 @@ function populateCurrencySelect(selectEl, selectedValue) {
 function walletStatusPill(status) {
   const s = String(status || "");
   if (s === "ACTIVE") return `<span class="pill pill--success">${escapeHtml(s)}</span>`;
-  if (s === "FROZEN") return `<span class="pill pill--warning">${escapeHtml(s)}</span>`;
-  if (s === "CLOSED") return `<span class="pill pill--neutral">${escapeHtml(s)}</span>`;
+  if (s === "FROZEN") return `<span class="pill pill--frozen">${escapeHtml(s)}</span>`;
+  if (s === "CLOSED") return `<span class="pill pill--closed">${escapeHtml(s)}</span>`;
   return `<span class="pill pill--neutral">${escapeHtml(s)}</span>`;
 }
 

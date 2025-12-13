@@ -44,7 +44,11 @@
 
 * { box-sizing: border-box; }
 
-html { font-size: 16px; }
+html {
+  font-size: 16px;
+  /* Prevent layout shift when content changes cause a scrollbar to appear/disappear */
+  scrollbar-gutter: stable;
+}
 
 body {
   margin: 0;
@@ -72,7 +76,11 @@ a:hover { text-decoration: underline; }
   padding: var(--space-3);
 }
 
-.container--header { padding: 0; }
+.container--header {
+  max-width: none;
+  width: 100%;
+  padding: 0;
+}
 
 .header {
   display: flex;
@@ -96,19 +104,39 @@ a:hover { text-decoration: underline; }
   font-size: 1.15rem;
   font-weight: 600;
   margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .nav {
   display: flex;
   gap: var(--space-2);
+  flex: 0 0 auto;
 }
 
 .nav a {
   padding: 8px 10px;
   border-radius: 10px;
+  border: 1px solid transparent;
+  background: rgba(37, 99, 235, 0.06);
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
 }
 
-.nav a:hover { background: rgba(37, 99, 235, 0.08); }
+.nav a:hover {
+  background: rgba(37, 99, 235, 0.10);
+  text-decoration: none;
+}
+
+.nav a[aria-current="page"] {
+  background: rgba(37, 99, 235, 0.12);
+  border-color: rgba(37, 99, 235, 0.25);
+  text-decoration: none;
+}
 
 .grid {
   display: grid;
@@ -172,6 +200,11 @@ a:hover { text-decoration: underline; }
   flex-wrap: wrap;
 }
 
+/* Reserve space so loading text doesn't push content down when toggled */
+#loading {
+  min-height: 1.55em;
+}
+
 .mb-3 { margin-bottom: var(--space-3); }
 
 .btn {
@@ -188,7 +221,14 @@ a:hover { text-decoration: underline; }
   font-weight: 600;
 }
 
-.btn:hover { border-color: rgba(37, 99, 235, 0.35); }
+.btn:hover {
+  border-color: rgba(37, 99, 235, 0.35);
+  background: rgba(37, 99, 235, 0.03);
+}
+
+.btn:active {
+  border-color: rgba(37, 99, 235, 0.45);
+}
 
 .btn--primary {
   background: var(--accent);
@@ -198,9 +238,21 @@ a:hover { text-decoration: underline; }
 
 .btn--primary:hover { filter: brightness(0.95); }
 
+.btn--primary:active { filter: brightness(0.90); }
+
 .btn--secondary {
   background: rgba(37, 99, 235, 0.08);
   border-color: rgba(37, 99, 235, 0.20);
+}
+
+.btn--secondary:hover {
+  background: rgba(37, 99, 235, 0.12);
+  border-color: rgba(37, 99, 235, 0.28);
+}
+
+.btn--secondary:active {
+  background: rgba(37, 99, 235, 0.16);
+  border-color: rgba(37, 99, 235, 0.35);
 }
 
 .btn:disabled {
@@ -221,6 +273,8 @@ a:hover { text-decoration: underline; }
 
 .pill--success { background: var(--success-bg); color: var(--success); border-color: rgba(22, 101, 52, 0.25); }
 .pill--warning { background: var(--warning-bg); color: var(--warning); border-color: rgba(146, 64, 14, 0.25); }
+.pill--frozen { background: rgba(37, 99, 235, 0.10); color: var(--accent); border-color: rgba(37, 99, 235, 0.25); }
+.pill--closed { background: rgba(15, 23, 42, 0.10); color: var(--text-muted); border-color: rgba(15, 23, 42, 0.22); }
 .pill--neutral { background: rgba(15, 23, 42, 0.04); color: var(--text); }
 .pill--error { background: var(--error-bg); color: var(--error); border-color: rgba(185, 28, 28, 0.25); }
 
@@ -314,4 +368,53 @@ a:hover { text-decoration: underline; }
 .wallet-item__balance {
   font-size: 1.1rem;
   font-weight: 700;
+}
+
+/* Wallet lifecycle buttons (semantic but still minimal) */
+#freezeWallet {
+  background: rgba(37, 99, 235, 0.10);
+  border-color: rgba(37, 99, 235, 0.25);
+  color: var(--text);
+}
+
+#freezeWallet:hover {
+  background: rgba(37, 99, 235, 0.14);
+  border-color: rgba(37, 99, 235, 0.32);
+}
+
+#freezeWallet:active {
+  background: rgba(37, 99, 235, 0.18);
+  border-color: rgba(37, 99, 235, 0.40);
+}
+
+#unfreezeWallet {
+  background: rgba(22, 101, 52, 0.10);
+  border-color: rgba(22, 101, 52, 0.22);
+  color: var(--text);
+}
+
+#unfreezeWallet:hover {
+  background: rgba(22, 101, 52, 0.14);
+  border-color: rgba(22, 101, 52, 0.28);
+}
+
+#unfreezeWallet:active {
+  background: rgba(22, 101, 52, 0.18);
+  border-color: rgba(22, 101, 52, 0.35);
+}
+
+#closeWallet {
+  background: rgba(15, 23, 42, 0.08);
+  border-color: rgba(15, 23, 42, 0.18);
+  color: var(--text);
+}
+
+#closeWallet:hover {
+  background: rgba(15, 23, 42, 0.12);
+  border-color: rgba(15, 23, 42, 0.24);
+}
+
+#closeWallet:active {
+  background: rgba(15, 23, 42, 0.16);
+  border-color: rgba(15, 23, 42, 0.30);
 }
