@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-"""End-to-end-ish test (API-level) for wallet lifecycle behavior.
+"""API-level integration test for wallet lifecycle behavior.
 
 Flow:
 1) Create wallet
 2) Freeze -> deposit blocked
 3) Unfreeze -> deposit allowed
 
-This test is intentionally simple and exercises the full stack:
+This test exercises the internal HTTP API (Flask test client):
 routes -> service -> domain rules -> repositories -> SQLite.
 """
 
@@ -19,7 +19,7 @@ from app import create_app
 from tests.integration.helpers import create_wallet, deposit
 
 
-@pytest.mark.e2e
+@pytest.mark.integration
 def test_freeze_blocks_deposit_then_unfreeze_allows(tmp_path: Path):
     db_path = tmp_path / "e2e_wallet.db"
     app = create_app({"TESTING": True, "DATABASE": str(db_path)})
