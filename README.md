@@ -4,6 +4,8 @@
 [![Pytest](https://img.shields.io/badge/Pytest-Testing-orange.svg)](https://docs.pytest.org/)
 [![Playwright](https://img.shields.io/badge/Playwright-E2E%20Tests-purple.svg)](https://playwright.dev/)
 [![JMeter](https://img.shields.io/badge/JMeter-Performance-red.svg)](https://jmeter.apache.org/)
+[![CI](https://github.com/marcus-rk/Multi-Currency-Wallet-Simulator/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/marcus-rk/Multi-Currency-Wallet-Simulator/actions/workflows/ci.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=marcus-rk_Multi-Currency-Wallet-Simulator&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=marcus-rk_Multi-Currency-Wallet-Simulator)
 
 # Multi-Currency Wallet Simulator
 
