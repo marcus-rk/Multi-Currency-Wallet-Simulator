@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from app.domain.enums import Currency
 
 def serialize_wallet(wallet):
@@ -39,7 +39,7 @@ def parse_amount_and_currency(data):
 
     try:
         amount = Decimal(str(data["amount"]))
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, InvalidOperation):
         return None, None, ({"error": "Invalid amount"}, 400)
 
     currency = None

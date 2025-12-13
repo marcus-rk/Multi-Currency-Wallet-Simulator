@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from flask import Blueprint, request, jsonify
 from app.domain.exceptions import WalletNotFoundError, ExchangeRateServiceError
 from app.services import wallet_service
@@ -67,7 +67,7 @@ def exchange():
 
     try:
         amount = Decimal(str(data["amount"]))
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, InvalidOperation):
         return jsonify({"error": "Invalid amount"}), 400
 
     try:

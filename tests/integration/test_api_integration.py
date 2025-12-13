@@ -128,6 +128,40 @@ def test_withdraw_insufficient_funds_records_failed_transaction(client, app_inst
         assert transactions[0].error_code.value == "INSUFFICIENT_FUNDS"
 
 
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    "endpoint, payload",
+    [
+        ("deposit", {"amount": "abc", "currency": "DKK"}),
+        ("withdraw", {"amount": "abc", "currency": "DKK"}),
+    ],
+)
+def test_deposit_withdraw_invalid_amount_returns_400_json(client, endpoint, payload):
+    wallet_id = create_wallet(client, "DKK")
+
+    response = client.post(f"/api/wallets/{wallet_id}/{endpoint}", json=payload)
+
+    assert response.status_code == 400
+    body = response.get_json()
+    assert isinstance(body, dict)
+    assert "error" in body
+    assert body["error"] == "Invalid amount"
+
+
+@pytest.mark.integration
+def test_exchange_invalid_amount_returns_400_json(client):
+    source_wallet_id = create_wallet(client, "DKK")
+    target_wallet_id = create_wallet(client, "USD")
+
+    response = exchange(client, source_wallet_id, target_wallet_id, "abc")
+
+    assert response.status_code == 400
+    body = response.get_json()
+    assert isinstance(body, dict)
+    assert "error" in body
+    assert body["error"] == "Invalid amount"
+
+
 # --- Exchange ---
 
 
