@@ -20,6 +20,21 @@ const els = {
   refreshButton: document.getElementById("refreshWallets"),
 };
 
+function clearAndShowLoading(message) {
+  clearFeedback({ loadingEl: els.loading, statusEl: els.status, errorEl: els.error });
+  setLoading(els.loading, true, message);
+}
+
+function stopLoading() {
+  setLoading(els.loading, false);
+}
+
+function readCreateWalletInput() {
+  return {
+    currency: els.currencySelect.value,
+  };
+}
+
 function walletStatusPill(status) {
   const s = String(status || "");
   if (s === "ACTIVE") return `<span class="pill pill--success">${escapeHtml(s)}</span>`;
@@ -52,8 +67,7 @@ function renderWallets(wallets) {
 }
 
 async function loadWallets() {
-  clearFeedback({ loadingEl: els.loading, statusEl: els.status, errorEl: els.error });
-  setLoading(els.loading, true, "Loading wallets...");
+  clearAndShowLoading("Loading wallets...");
 
   try {
     const wallets = await fetchJson("/api/wallets");
@@ -62,17 +76,18 @@ async function loadWallets() {
     setError(els.error, formatError(err));
     els.walletList.innerHTML = "";
   } finally {
-    setLoading(els.loading, false);
+    stopLoading();
   }
+}
+
+function onRefreshClick() {
+  return loadWallets();
 }
 
 async function onCreateWalletSubmit(event) {
   event.preventDefault();
-  clearFeedback({ loadingEl: els.loading, statusEl: els.status, errorEl: els.error });
-
-  const currency = els.currencySelect.value;
-
-  setLoading(els.loading, true, "Creating wallet...");
+  const { currency } = readCreateWalletInput();
+  clearAndShowLoading("Creating wallet...");
   try {
     const wallet = await fetchJson("/api/wallets", {
       method: "POST",
@@ -89,15 +104,15 @@ async function onCreateWalletSubmit(event) {
       setStatus(els.status, JSON.stringify(err.data));
     }
   } finally {
-    setLoading(els.loading, false);
+    stopLoading();
   }
 }
 
 function init() {
   populateCurrencySelect(els.currencySelect);
   els.createForm.addEventListener("submit", onCreateWalletSubmit);
-  els.refreshButton.addEventListener("click", loadWallets);
-  loadWallets();
+  els.refreshButton.addEventListener("click", onRefreshClick);
+  onRefreshClick();
 }
 
 init();

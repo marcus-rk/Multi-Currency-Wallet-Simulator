@@ -107,22 +107,30 @@ function renderTransactions(transactions) {
   });
 }
 
-async function loadWalletAndTransactions(walletId) {
+async function fetchWalletData(walletId) {
+  const [wallet, transactions] = await Promise.all([
+    fetchJson(`/api/wallets/${encodeURIComponent(walletId)}`),
+    fetchJson(`/api/wallets/${encodeURIComponent(walletId)}/transactions`),
+  ]);
+  return { wallet, transactions };
+}
+
+function renderWalletPage({ wallet, transactions }) {
+  document.title = `Wallet ${wallet.id}`;
+  uiElements.walletInfo.innerHTML = renderWalletInfo(wallet);
+  uiElements.transactions.innerHTML = renderTransactions(transactions);
+
+  populateCurrencySelect(uiElements.depositCurrency, wallet.currency);
+  populateCurrencySelect(uiElements.withdrawCurrency, wallet.currency);
+}
+
+async function refreshWallet(walletId) {
   clearFeedback({ loadingEl: uiElements.loading, statusEl: uiElements.status, errorEl: uiElements.error });
   setLoading(uiElements.loading, true, "Loading wallet...");
 
   try {
-    const [wallet, transactions] = await Promise.all([
-      fetchJson(`/api/wallets/${encodeURIComponent(walletId)}`),
-      fetchJson(`/api/wallets/${encodeURIComponent(walletId)}/transactions`),
-    ]);
-
-    document.title = `Wallet ${wallet.id}`;
-    uiElements.walletInfo.innerHTML = renderWalletInfo(wallet);
-    uiElements.transactions.innerHTML = renderTransactions(transactions);
-
-    populateCurrencySelect(uiElements.depositCurrency, wallet.currency);
-    populateCurrencySelect(uiElements.withdrawCurrency, wallet.currency);
+    const data = await fetchWalletData(walletId);
+    renderWalletPage(data);
   } catch (err) {
     setError(uiElements.error, formatError(err));
     uiElements.walletInfo.innerHTML = "";
@@ -149,7 +157,7 @@ async function runWalletOperation({ walletId, kind, amount, currency }) {
       setStatus(uiElements.status, `${kind} completed`);
     }
 
-    await loadWalletAndTransactions(walletId);
+    await refreshWallet(walletId);
   } catch (err) {
     setError(uiElements.error, formatError(err));
 
@@ -157,7 +165,7 @@ async function runWalletOperation({ walletId, kind, amount, currency }) {
     if (err instanceof ApiError && err.status === 422 && err.data && err.data.transaction) {
       const tx = err.data.transaction;
       setError(uiElements.error, `${tx.error_code || "Operation failed"} (HTTP 422)`);
-      await loadWalletAndTransactions(walletId);
+      await refreshWallet(walletId);
     }
   } finally {
     setLoading(uiElements.loading, false);
@@ -173,13 +181,51 @@ async function runWalletLifecycle({ walletId, action }) {
       method: "POST",
     });
     setStatus(uiElements.status, `${action} completed`);
-    await loadWalletAndTransactions(walletId);
+    await refreshWallet(walletId);
   } catch (err) {
     setError(uiElements.error, formatError(err));
-    await loadWalletAndTransactions(walletId);
+    await refreshWallet(walletId);
   } finally {
     setLoading(uiElements.loading, false);
   }
+}
+
+async function onDepositSubmit(walletId, event) {
+  event.preventDefault();
+  await runWalletOperation({
+    walletId,
+    kind: "deposit",
+    amount: uiElements.depositAmount.value,
+    currency: uiElements.depositCurrency.value,
+  });
+  uiElements.depositForm.reset();
+}
+
+async function onWithdrawSubmit(walletId, event) {
+  event.preventDefault();
+  await runWalletOperation({
+    walletId,
+    kind: "withdraw",
+    amount: uiElements.withdrawAmount.value,
+    currency: uiElements.withdrawCurrency.value,
+  });
+  uiElements.withdrawForm.reset();
+}
+
+function onRefreshClick(walletId) {
+  return refreshWallet(walletId);
+}
+
+function onFreezeClick(walletId) {
+  return runWalletLifecycle({ walletId, action: "freeze" });
+}
+
+function onUnfreezeClick(walletId) {
+  return runWalletLifecycle({ walletId, action: "unfreeze" });
+}
+
+function onCloseClick(walletId) {
+  return runWalletLifecycle({ walletId, action: "close" });
 }
 
 function init() {
@@ -189,35 +235,15 @@ function init() {
     return;
   }
 
-  uiElements.refreshButton.addEventListener("click", () => loadWalletAndTransactions(walletId));
+  uiElements.refreshButton.addEventListener("click", () => onRefreshClick(walletId));
+  uiElements.freezeButton.addEventListener("click", () => onFreezeClick(walletId));
+  uiElements.unfreezeButton.addEventListener("click", () => onUnfreezeClick(walletId));
+  uiElements.closeButton.addEventListener("click", () => onCloseClick(walletId));
 
-  uiElements.freezeButton.addEventListener("click", () => runWalletLifecycle({ walletId, action: "freeze" }));
-  uiElements.unfreezeButton.addEventListener("click", () => runWalletLifecycle({ walletId, action: "unfreeze" }));
-  uiElements.closeButton.addEventListener("click", () => runWalletLifecycle({ walletId, action: "close" }));
+  uiElements.depositForm.addEventListener("submit", (event) => onDepositSubmit(walletId, event));
+  uiElements.withdrawForm.addEventListener("submit", (event) => onWithdrawSubmit(walletId, event));
 
-  uiElements.depositForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    await runWalletOperation({
-      walletId,
-      kind: "deposit",
-      amount: uiElements.depositAmount.value,
-      currency: uiElements.depositCurrency.value,
-    });
-    uiElements.depositForm.reset();
-  });
-
-  uiElements.withdrawForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    await runWalletOperation({
-      walletId,
-      kind: "withdraw",
-      amount: uiElements.withdrawAmount.value,
-      currency: uiElements.withdrawCurrency.value,
-    });
-    uiElements.withdrawForm.reset();
-  });
-
-  loadWalletAndTransactions(walletId);
+  refreshWallet(walletId);
 }
 
 init();

@@ -93,6 +93,31 @@ function renderTransaction(tx) {
   });
 }
 
+function renderExchangeResult({ source_wallet, target_wallet, transaction }) {
+  return (
+    renderWalletSummary(source_wallet, "Source wallet") +
+    renderWalletSummary(target_wallet, "Target wallet") +
+    `<h3>Transaction</h3>` +
+    renderTransaction(transaction)
+  );
+}
+
+function setResultEmptyState(message) {
+  els.result.innerHTML = `<p ${EMPTY_RESULT_MARKER}="true">${escapeHtml(message)}</p>`;
+}
+
+function clearResultEmptyStateIfPresent() {
+  const onlyChild = els.result?.firstElementChild;
+  const isOnlyEmptyState =
+    onlyChild &&
+    onlyChild.getAttribute(EMPTY_RESULT_MARKER) === "true" &&
+    els.result.childElementCount === 1;
+
+  if (isOnlyEmptyState) {
+    els.result.innerHTML = "";
+  }
+}
+
 async function loadWallets() {
   clearFeedback({ loadingEl: els.loading, statusEl: els.status, errorEl: els.error });
   setLoading(els.loading, true, "Loading wallets...");
@@ -106,19 +131,8 @@ async function loadWallets() {
       els.target.selectedIndex = 1;
     }
 
-    if (wallets.length === 0) {
-      els.result.innerHTML = `<p ${EMPTY_RESULT_MARKER}="true">Create wallets first.</p>`;
-    } else {
-      const onlyChild = els.result?.firstElementChild;
-      const isOnlyEmptyState =
-        onlyChild &&
-        onlyChild.getAttribute(EMPTY_RESULT_MARKER) === "true" &&
-        els.result.childElementCount === 1;
-
-      if (isOnlyEmptyState) {
-        els.result.innerHTML = "";
-      }
-    }
+    if (wallets.length === 0) setResultEmptyState("Create wallets first.");
+    else clearResultEmptyStateIfPresent();
   } catch (err) {
     setError(els.error, formatError(err));
   } finally {
@@ -149,11 +163,11 @@ async function onExchangeSubmit(event) {
       setStatus(els.status, "Exchange completed");
     }
 
-    els.result.innerHTML =
-      renderWalletSummary(response.source_wallet, "Source wallet") +
-      renderWalletSummary(response.target_wallet, "Target wallet") +
-      `<h3>Transaction</h3>` +
-      renderTransaction(tx);
+    els.result.innerHTML = renderExchangeResult({
+      source_wallet: response.source_wallet,
+      target_wallet: response.target_wallet,
+      transaction: tx,
+    });
 
     await loadWallets();
   } catch (err) {
@@ -161,11 +175,11 @@ async function onExchangeSubmit(event) {
 
     if (err instanceof ApiError && err.status === 422 && err.data) {
       const tx = err.data.transaction;
-      els.result.innerHTML =
-        renderWalletSummary(err.data.source_wallet, "Source wallet") +
-        renderWalletSummary(err.data.target_wallet, "Target wallet") +
-        `<h3>Transaction</h3>` +
-        renderTransaction(tx);
+      els.result.innerHTML = renderExchangeResult({
+        source_wallet: err.data.source_wallet,
+        target_wallet: err.data.target_wallet,
+        transaction: tx,
+      });
       await loadWallets();
     }
   } finally {

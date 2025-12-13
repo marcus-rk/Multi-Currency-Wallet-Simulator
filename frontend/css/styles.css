@@ -1,11 +1,16 @@
 /*
-  Multi-Currency Wallet Simulator — Minimal UI (SRS-aligned)
+  Multi-Currency Wallet Simulator — Minimal Fintech Dashboard UI (SRS-aligned)
 
   Design goals
   - Lightweight, modern, accessible, Lighthouse-friendly
   - No external CSS libs, no font downloads
   - Mobile-first, responsive grid at >= 900px
   - Clear states: hover, focus-visible, disabled, success, error, warning
+
+  Identity notes
+  - Calm “dashboard” surfaces with subtle shadows
+  - One strong accent (primary actions + active nav)
+  - High readability and consistent spacing
 */
 
 :root {
@@ -16,10 +21,13 @@
   --text-muted: #334155;
 
   /* Palette */
-  --bg: #f1f5f9;
+  --bg: #f6f8fb;
   --card: #ffffff;
-  --border: #dbe2ea;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
   --accent: #2563eb;
+  --accent-soft: rgba(37, 99, 235, 0.08);
+  --accent-soft-hover: rgba(37, 99, 235, 0.12);
 
   --success: #166534;
   --success-bg: #dcfce7;
@@ -34,12 +42,15 @@
   --space-3: 16px;
   --space-4: 24px;
   --radius: 12px;
+  --radius-sm: 10px;
 
   /* Shadow */
-  --shadow: 0 1px 2px rgba(15, 23, 42, 0.08), 0 6px 16px rgba(15, 23, 42, 0.06);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 10px 28px rgba(15, 23, 42, 0.08);
 
   /* Focus */
-  --focus: 2px solid rgba(37, 99, 235, 0.9);
+  --focus: 2px solid rgba(37, 99, 235, 0.95);
+  --focus-shadow: 0 0 0 4px rgba(37, 99, 235, 0.20);
 }
 
 * { box-sizing: border-box; }
@@ -55,7 +66,9 @@ body {
   font-family: var(--font-sans);
   line-height: 1.55;
   color: var(--text);
-  background: var(--bg);
+  background: radial-gradient(1000px circle at 20% -10%, rgba(37, 99, 235, 0.08), transparent 55%), var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
@@ -76,6 +89,10 @@ a:hover { text-decoration: underline; }
   padding: var(--space-3);
 }
 
+@media (min-width: 900px) {
+  .container { padding: var(--space-4); }
+}
+
 .container--header {
   max-width: none;
   width: 100%;
@@ -90,6 +107,7 @@ a:hover { text-decoration: underline; }
   padding: var(--space-3);
   border-bottom: 1px solid var(--border);
   background: var(--card);
+  box-shadow: var(--shadow-sm);
 }
 
 .header__inner {
@@ -101,8 +119,9 @@ a:hover { text-decoration: underline; }
 }
 
 .header__title {
-  font-size: 1.15rem;
-  font-weight: 600;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   margin: 0;
   flex: 1 1 auto;
   min-width: 0;
@@ -119,22 +138,24 @@ a:hover { text-decoration: underline; }
 
 .nav a {
   padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  background: rgba(37, 99, 235, 0.06);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.02);
   color: var(--text);
   font-weight: 600;
   text-decoration: none;
+  transition: background 120ms ease, border-color 120ms ease;
 }
 
 .nav a:hover {
-  background: rgba(37, 99, 235, 0.10);
+  background: rgba(15, 23, 42, 0.04);
+  border-color: var(--border-strong);
   text-decoration: none;
 }
 
 .nav a[aria-current="page"] {
-  background: rgba(37, 99, 235, 0.12);
-  border-color: rgba(37, 99, 235, 0.25);
+  background: var(--accent-soft);
+  border-color: rgba(37, 99, 235, 0.28);
   text-decoration: none;
 }
 
@@ -160,8 +181,10 @@ a:hover { text-decoration: underline; }
 .card__title {
   margin: 0;
   padding: var(--space-3);
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  background: rgba(15, 23, 42, 0.015);
   border-bottom: 1px solid var(--border);
 }
 
@@ -179,10 +202,16 @@ a:hover { text-decoration: underline; }
 .field select {
   width: 100%;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--card);
   color: var(--text);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.field input:hover,
+.field select:hover {
+  border-color: var(--border-strong);
 }
 
 .field input::placeholder { color: var(--text-muted); }
@@ -191,6 +220,7 @@ a:hover { text-decoration: underline; }
 .field select:focus-visible {
   outline: var(--focus);
   outline-offset: 2px;
+  box-shadow: var(--focus-shadow);
 }
 
 .actions {
@@ -213,12 +243,13 @@ a:hover { text-decoration: underline; }
   justify-content: center;
   gap: 8px;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--card);
   color: var(--text);
   cursor: pointer;
   font-weight: 600;
+  transition: background 120ms ease, border-color 120ms ease, filter 120ms ease, box-shadow 120ms ease;
 }
 
 .btn:hover {
@@ -234,6 +265,7 @@ a:hover { text-decoration: underline; }
   background: var(--accent);
   border-color: var(--accent);
   color: #ffffff;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.18);
 }
 
 .btn--primary:hover { filter: brightness(0.95); }
@@ -241,12 +273,12 @@ a:hover { text-decoration: underline; }
 .btn--primary:active { filter: brightness(0.90); }
 
 .btn--secondary {
-  background: rgba(37, 99, 235, 0.08);
+  background: var(--accent-soft);
   border-color: rgba(37, 99, 235, 0.20);
 }
 
 .btn--secondary:hover {
-  background: rgba(37, 99, 235, 0.12);
+  background: var(--accent-soft-hover);
   border-color: rgba(37, 99, 235, 0.28);
 }
 
@@ -282,12 +314,15 @@ a:hover { text-decoration: underline; }
   border-radius: var(--radius);
   border: 1px solid var(--border);
   padding: var(--space-2) var(--space-3);
-  background: rgba(15, 23, 42, 0.03);
-  border-left: 4px solid rgba(15, 23, 42, 0.25);
+  background: rgba(15, 23, 42, 0.02);
+  border-left: 4px solid rgba(15, 23, 42, 0.22);
   white-space: pre-wrap;
 }
 
-.banner--info { border-left-color: rgba(37, 99, 235, 0.75); }
+.banner--info {
+  background: rgba(37, 99, 235, 0.06);
+  border-left-color: rgba(37, 99, 235, 0.75);
+}
 .banner--success { background: var(--success-bg); border-left-color: rgba(22, 101, 52, 0.7); }
 .banner--error { background: var(--error-bg); border-left-color: rgba(185, 28, 28, 0.75); }
 .banner--warning { background: var(--warning-bg); border-left-color: rgba(146, 64, 14, 0.75); }
