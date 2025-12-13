@@ -110,6 +110,14 @@ pytest -m integration --cov=app --cov-report=term-missing
 
 ---
 
+## Seeding demo data (optional)
+
+Seed demo wallets + transactions once (skips if already seeded): `python seed/seed_db.py`.
+Reset and reseed from scratch: `python seed/seed_db.py --reset` (or clear tables with `--force`).
+Docker (persist DB): run with `-v wallet-sim-data:/app/instance`, then seed once via `docker exec -it Currency-Wallet-Sim python seed/seed_db.py`.
+
+---
+
 ## Docker (Build + Run)
 
 Build the image:
