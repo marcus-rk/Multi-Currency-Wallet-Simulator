@@ -113,12 +113,12 @@ def test_apply_exchange_fails_on_missing_fx_rate(wallet_factory):
     source = wallet_factory(wallet_id="source", balance=Decimal("100.00"), currency=Currency.DKK)
     target = wallet_factory(wallet_id="target", balance=Decimal("0.00"), currency=Currency.USD)
 
-    # Act: attempt exchange without an FX rate
+    # Act: attempt exchange with an invalid FX rate (e.g., zero)
     updated_source, updated_target, tx = apply_exchange(
         source_wallet=source,
         target_wallet=target,
         amount=Decimal("10.00"),
-        fx_rate=None,
+        fx_rate=Decimal("0"),
         transaction_id="tx-4",
         now=now,
     )
