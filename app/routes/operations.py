@@ -6,6 +6,7 @@ from app.routes.helpers import serialize_wallet, serialize_transaction, parse_am
 
 operations_bp = Blueprint("operations", __name__, url_prefix="/api/wallets")
 
+
 @operations_bp.route("/<wallet_id>/deposit", methods=["POST"])
 def deposit(wallet_id):
     data = request.get_json()
@@ -25,10 +26,10 @@ def deposit(wallet_id):
         "wallet": serialize_wallet(wallet),
         "transaction": serialize_transaction(transaction)
     }
-    
+
     if transaction.error_code:
         return jsonify(response), 422
-    
+
     return jsonify(response), 200
 
 

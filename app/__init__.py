@@ -1,7 +1,6 @@
 # app/__init__.py
 import os
 from flask import Flask
-import pytest
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -38,7 +37,7 @@ def create_app(test_config: dict = None) -> Flask:
     from .routes.wallets import wallets_bp
     from .routes.operations import operations_bp
     from .routes.transactions import transactions_bp
-    
+
     app.register_blueprint(frontend_bp)
     app.register_blueprint(health_bp)
     app.register_blueprint(wallets_bp)

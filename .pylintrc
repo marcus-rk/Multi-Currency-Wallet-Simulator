@@ -4,8 +4,10 @@ disable =
     C0115, # missing-class-docstring
     C0116, # missing-function-docstring
     C0301, # line-too-long
+    C0305, # trailing-newlines
     C0413, # wrong-import-position
     R0903, # too-few-public-methods
+    R0902, # too-many-instance-attributes
     R0913, # too-many-arguments
     R0917, # too-many-positional-arguments
     R0801, # duplicate-code

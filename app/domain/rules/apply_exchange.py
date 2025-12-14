@@ -83,22 +83,19 @@ def _validate_exchange(
     """
     Returns an error code if the exchange is invalid, otherwise None.
     """
+    error_code: Optional[TransactionErrorCode] = None
+
     if not source_wallet.is_active() or not target_wallet.is_active():
-        return TransactionErrorCode.INVALID_WALLET_STATE
+        error_code = TransactionErrorCode.INVALID_WALLET_STATE
+    elif source_wallet.id == target_wallet.id:
+        error_code = TransactionErrorCode.INVALID_WALLET_STATE
+    elif amount <= Decimal("0"):
+        error_code = TransactionErrorCode.INVALID_AMOUNT
+    elif source_wallet.currency == target_wallet.currency:
+        error_code = TransactionErrorCode.UNSUPPORTED_CURRENCY
+    elif amount > source_wallet.balance:
+        error_code = TransactionErrorCode.INSUFFICIENT_FUNDS
+    elif fx_rate is None or fx_rate <= Decimal("0"):
+        error_code = TransactionErrorCode.EXCHANGE_RATE_UNAVAILABLE
 
-    if source_wallet.id == target_wallet.id:
-        return TransactionErrorCode.INVALID_WALLET_STATE
-
-    if amount <= Decimal("0"):
-        return TransactionErrorCode.INVALID_AMOUNT
-
-    if source_wallet.currency == target_wallet.currency:
-        return TransactionErrorCode.UNSUPPORTED_CURRENCY
-
-    if amount > source_wallet.balance:
-        return TransactionErrorCode.INSUFFICIENT_FUNDS
-
-    if fx_rate is None or fx_rate <= Decimal("0"):
-        return TransactionErrorCode.EXCHANGE_RATE_UNAVAILABLE
-
-    return None
+    return error_code

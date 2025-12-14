@@ -46,7 +46,7 @@ def get_db() -> sqlite3.Connection:
     return g.db
 
 
-def close_db(e: Optional[BaseException] = None) -> None:
+def close_db(_e: Optional[BaseException] = None) -> None:
     db = g.pop("db", None)
     if db is not None:
         db.close()

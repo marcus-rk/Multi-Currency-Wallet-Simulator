@@ -3,9 +3,9 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 from ..enums import (
-    TransactionType, 
+    TransactionType,
     TransactionStatus,
-    Currency, 
+    Currency,
     TransactionErrorCode
 )
 
@@ -57,9 +57,9 @@ class Transaction:
     status: TransactionStatus
     error_code: Optional[TransactionErrorCode]
     created_at: datetime
-    credited_amount: Optional[Decimal] = None       
-    credited_currency: Optional[Currency] = None    
-    source_balance_after: Optional[Decimal] = None  
+    credited_amount: Optional[Decimal] = None
+    credited_currency: Optional[Currency] = None
+    source_balance_after: Optional[Decimal] = None
     target_balance_after: Optional[Decimal] = None
 
     # ------------------------------------------------------------------
@@ -183,4 +183,3 @@ class Transaction:
             error_code=None,
             created_at=created_at,
         )
-

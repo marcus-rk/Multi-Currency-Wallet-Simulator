@@ -53,8 +53,6 @@ def freeze_wallet(wallet_id):
         return jsonify({"error": str(e)}), 404
     except WalletStateError:
         return jsonify({"error": WALLET_TRANSITION_NOT_ALLOWED_ERROR}), 409
-    except Exception:
-        return jsonify({"error": INTERNAL_SERVER_ERROR}), 500
 
 
 @wallets_bp.route("/<wallet_id>/unfreeze", methods=["POST"])
@@ -69,8 +67,6 @@ def unfreeze_wallet(wallet_id):
         return jsonify({"error": str(e)}), 404
     except WalletStateError:
         return jsonify({"error": WALLET_TRANSITION_NOT_ALLOWED_ERROR}), 409
-    except Exception:
-        return jsonify({"error": INTERNAL_SERVER_ERROR}), 500
 
 
 @wallets_bp.route("/<wallet_id>/close", methods=["POST"])
@@ -85,6 +81,9 @@ def close_wallet(wallet_id):
         return jsonify({"error": str(e)}), 404
     except WalletStateError:
         return jsonify({"error": WALLET_TRANSITION_NOT_ALLOWED_ERROR}), 409
-    except Exception:
-        return jsonify({"error": INTERNAL_SERVER_ERROR}), 500
+
+
+@wallets_bp.errorhandler(Exception)
+def wallets_unexpected_error(_err):
+    return jsonify({"error": INTERNAL_SERVER_ERROR}), 500
 

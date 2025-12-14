@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from decimal import Decimal
+import sqlite3
 from typing import Tuple, List
 from uuid import uuid4
 
@@ -14,9 +15,9 @@ from app.domain.rules import (
     apply_status_change,
 )
 from app.repository.wallets_repo import (
-    get_wallet as repo_get_wallet, 
+    get_wallet as repo_get_wallet,
     get_all_wallets as repo_get_all_wallets,
-    update_wallet, 
+    update_wallet,
     create_wallet as repo_create_wallet
 )
 from app.repository.transactions_repo import (
@@ -54,7 +55,7 @@ def change_wallet_status(
     # the new transaction type (schema stays unchanged by requirement).
     try:
         create_transaction(tx)
-    except Exception:
+    except sqlite3.Error:
         tx = None
 
     return updated_wallet, tx
@@ -195,4 +196,3 @@ def _get_wallet_or_fail(wallet_id: str) -> Wallet:
     if wallet is None:
         raise WalletNotFoundError(f"Wallet {wallet_id} not found")
     return wallet
-
