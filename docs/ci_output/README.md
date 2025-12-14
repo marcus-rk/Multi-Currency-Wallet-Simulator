@@ -18,3 +18,5 @@ The corresponding `.txt` files are included as submission evidence and can be re
 
 In GitHub Actions, the CI workflow captures the console output for each step and uploads it as an artifact.
 These files are copies of that output placed here for documentation/submission convenience.
+
+Artifacts downloaded: 14 December 2025 (before delivery)

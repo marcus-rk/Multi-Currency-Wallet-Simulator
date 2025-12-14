@@ -22,7 +22,7 @@ This project is focused on making a small **multi-currency wallet simulator** fo
 - **Managing wallets** – create wallets in different currencies and see their balances.
 - **Moving money** – make deposits, withdrawals and currency exchanges between wallets.
 - **Seeing history** – view a simple log of what happened to a wallet over time.
-- **Using external API** – fetches live (?or stubbed in tests?) exchange rates to support currency conversions.
+- **Using external API** – fetches live exchange rates to support currency conversions (tests use a local stub by setting `EXCHANGE_API_URL`).
 
 ---
 
@@ -49,13 +49,15 @@ Top-level special files:
 
 ## Setup
 
+Note: CI runs on Python 3.12, while the Docker image uses Python 3.11. Small output differences between environments can happen.
+
 Create and activate a virtual environment, then install dependencies:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
 pip install --upgrade pip
+pip install -r requirements.txt
 ```
 
 ---
@@ -151,14 +153,14 @@ docker build -t wallet-sim:latest .
 Run detached (background):
 
 ```bash
-docker run -d --name Current-Wallet-Sim -p 8080:5000 wallet-sim:latest
+docker run -d --name Currency-Wallet-Sim -p 8080:5000 wallet-sim:latest
 ```
 
 Stop and remove (when running detached):
 
 ```bash
-docker stop Current-Wallet-Sim
-docker rm Current-Wallet-Sim
+docker stop Currency-Wallet-Sim
+docker rm Currency-Wallet-Sim
 ```
 
 ---

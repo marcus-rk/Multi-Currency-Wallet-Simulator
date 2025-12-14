@@ -42,7 +42,7 @@ app/
   domain/
     models/   # dataclasses
     rules/    # pure business rules derived from black-box design
-  service/ # orchestrates domain + repositories + external API 
+  services/ # orchestrates domain + repositories + external API
   repository/
     wallets_repo.py
     transactions_repo.py
@@ -53,7 +53,7 @@ app/
 ```
 
 - `domain` = **business rules only**, no Flask, no DB, no HTTP, no external API.
-- `service` = **orchestration layer** combining:
+- `services` = **orchestration layer** combining:
   - domain rules,
   - database repositories,
   - external FX client (in production) or stub/mock (in tests).
@@ -94,11 +94,11 @@ app/
 
 ---
 
-### 2. Integration tests (focus: `app/service` + DB + FX stub/mock)
+### 2. Integration tests (focus: `app/services` + DB + FX stub/mock)
 
 **Scope**
 
-- Test service functions in `app/service/*` that:
+- Test service functions in `app/services/*` that:
   - load from DB via repositories,
   - call `domain.rules`,
   - save updated entities + transactions,
@@ -171,7 +171,7 @@ The FX client is always mocked/stubbed in tests because it is an **external, unm
   - never touch DB, Flask, or the external API.
 
 - **Integration tests (service)**:
-  - target `app/service` + real SQLite test DB + real repositories,
+  - target `app/services` + real SQLite test DB + real repositories,
   - use **mocked/stubbed FX client** to simulate external API behaviour.
 
 - **Internal API tests**:
