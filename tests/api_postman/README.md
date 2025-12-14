@@ -3,9 +3,9 @@
 This folder contains the **Postman collection + environment** used for API-level testing of the backend (HTTP contract tests).
 
 ## What’s included
-- `*.postman_collection.json` — requests + test scripts
-- `*.postman_environment.json` — variables used by the collection (base URL, wallet IDs, amounts)
-- `postman_run_49of49_passed.png` — evidence screenshot of a full 49 tests green run
+- `Multi-Currency Wallet API.postman_collection.json` — requests + test scripts
+- `MultiCurrencyWallet - Docker Local (8080).postman_environment.json` — variables used by the collection (base URL, wallet IDs, amounts)
+- `postman_run_75of75_passed.png` — evidence screenshot of a full green run
 
 ## What these tests verify
 - Each API endpoint returns the expected **HTTP status codes** and **JSON response shape**
