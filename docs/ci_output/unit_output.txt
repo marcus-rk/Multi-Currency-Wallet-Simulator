@@ -1,0 +1,55 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.12, pytest-9.0.1, pluggy-1.6.0
+rootdir: /home/runner/work/Multi-Currency-Wallet-Simulator/Multi-Currency-Wallet-Simulator
+configfile: pytest.ini
+plugins: base-url-2.1.0, cov-7.0.0, playwright-0.7.2
+collected 138 items
+
+tests/unit/test_apply_exchange_whitebox.py .....                         [  3%]
+tests/unit/test_apply_status_change_whitebox.py .........                [ 10%]
+tests/unit/test_exchange_service_whitebox.py ......                      [ 14%]
+tests/unit/test_wallet_deposit_blackbox.py ............................. [ 35%]
+....                                                                     [ 38%]
+tests/unit/test_wallet_exchange_blackbox.py ............................ [ 58%]
+.....                                                                    [ 62%]
+tests/unit/test_wallet_service_whitebox.py ..........                    [ 69%]
+tests/unit/test_wallet_state_blackbox.py ..........                      [ 76%]
+tests/unit/test_wallet_withdraw_blackbox.py ............................ [ 97%]
+....                                                                     [100%]
+
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.12-final-0 _______________
+
+Name                                      Stmts   Miss  Cover   Missing
+-----------------------------------------------------------------------
+app/__init__.py                              29     22    24%   15-47
+app/config.py                                 9      0   100%
+app/database.py                              20     11    45%   40-46, 50-52, 56-58, 62
+app/domain/__init__.py                        0      0   100%
+app/domain/enums.py                          24      0   100%
+app/domain/exceptions.py                      6      0   100%
+app/domain/models/Transaction.py             32      0   100%
+app/domain/models/Wallet.py                  14      0   100%
+app/domain/models/__init__.py                 0      0   100%
+app/domain/rules/__init__.py                  4      0   100%
+app/domain/rules/apply_deposit.py            26      0   100%
+app/domain/rules/apply_exchange.py           40      0   100%
+app/domain/rules/apply_status_change.py      14      0   100%
+app/domain/rules/apply_withdraw.py           28      0   100%
+app/domain/rules/wallet_state.py             15      0   100%
+app/repository/__init__.py                    0      0   100%
+app/repository/transactions_repo.py          22     12    45%   17-53, 58-81, 89-114, 119
+app/repository/wallets_repo.py               26     15    42%   12-27, 32-42, 47-55, 60-75, 80
+app/routes/__init__.py                        0      0   100%
+app/routes/frontend.py                       27     27     0%   1-45
+app/routes/health.py                          5      5     0%   1-9
+app/routes/helpers.py                        20     20     0%   1-52
+app/routes/operations.py                     58     58     0%   1-94
+app/routes/transactions.py                   12     12     0%   1-14
+app/routes/wallets.py                        69     69     0%   1-88
+app/services/__init__.py                      0      0   100%
+app/services/exchange_service.py             24      0   100%
+app/services/wallet_service.py               64      2    97%   58-59
+-----------------------------------------------------------------------
+TOTAL                                       588    253    57%
+============================= 138 passed in 0.94s ==============================
