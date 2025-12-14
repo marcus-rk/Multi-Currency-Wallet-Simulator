@@ -1,3 +1,8 @@
+"""Static frontend routes.
+
+Serves the minimal HTML/CSS/JS frontend from the `frontend/` directory.
+"""
+
 from pathlib import Path
 from flask import Blueprint, send_from_directory
 

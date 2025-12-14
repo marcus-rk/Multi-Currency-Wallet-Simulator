@@ -1,4 +1,9 @@
-# app/config.py
+"""Application configuration.
+
+Reads runtime settings from environment variables and provides defaults for local
+development and testing.
+"""
+
 import os
 
 # Project root (one level above app/)

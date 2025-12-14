@@ -1,4 +1,10 @@
+"""Route-layer helpers.
+
+Serialization helpers and shared request parsing used by multiple blueprints.
+"""
+
 from decimal import Decimal, InvalidOperation
+
 from app.domain.enums import Currency
 
 def serialize_wallet(wallet):

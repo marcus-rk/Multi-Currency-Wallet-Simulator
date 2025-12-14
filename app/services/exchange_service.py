@@ -1,4 +1,8 @@
-# app/services/exchange_service.py
+"""External FX rate integration.
+
+Provides a small boundary for fetching exchange rates used by the wallet service.
+Tests typically stub this boundary to keep runs deterministic.
+"""
 
 from decimal import Decimal, InvalidOperation
 from typing import Optional
@@ -8,7 +12,7 @@ import requests
 from app.domain.enums import Currency
 from app.domain.exceptions import ExchangeRateServiceError
 
-# Documentation URL Frankfurter API: https://frankfurter.dev
+# Frankfurter is used as the default public FX provider (configurable via EXCHANGE_API_URL).
 
 SAME_CURRENCY_RATE: Decimal = Decimal("1.0")
 

@@ -31,7 +31,7 @@ export EXCHANGE_API_URL=http://127.0.0.1:8081
 # Optional: keep E2E data separate
 export DATABASE=instance/e2e_wallet.db
 
-python -m flask --app app run --port 5000
+flask --app app:create_app run --port 5000
 ```
 
 The UI is served by the backend, so this is all you need running.
@@ -57,7 +57,7 @@ FX_PID=$!
 export EXCHANGE_API_URL=http://127.0.0.1:8081
 export DATABASE=instance/e2e_wallet.db
 
-python -m flask --app app run --port 5000 &
+flask --app app:create_app run --port 5000 &
 APP_PID=$!
 
 cleanup() { kill "$APP_PID" "$FX_PID" 2>/dev/null || true; }

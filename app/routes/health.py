@@ -1,3 +1,5 @@
+"""Health check endpoint."""
+
 from flask import Blueprint, jsonify
 
 

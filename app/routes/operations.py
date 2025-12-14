@@ -1,3 +1,8 @@
+"""Money movement routes.
+
+Endpoints for deposit, withdrawal, and cross-wallet currency exchange.
+"""
+
 from decimal import Decimal, InvalidOperation
 from flask import Blueprint, request, jsonify
 from app.domain.exceptions import WalletNotFoundError, ExchangeRateServiceError

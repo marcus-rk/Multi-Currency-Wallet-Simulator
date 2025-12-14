@@ -15,6 +15,82 @@ The project is designed as a **testing playground**: unit, integration, API, E2E
 
 ---
 
+## Table of Contents
+
+- [Quick Overview (for teachers)](#quick-overview)
+- [One-minute Quickstart (local)](#quickstart)
+- [Domain Concepts](#domain)
+- [Runtime Configuration](#runtime-config)
+- [Project Structure](#project-structure)
+- [Setup](#setup)
+- [Testing](#testing)
+- [Seeding demo data](#seeding)
+- [Docker (Build + Run)](#docker)
+- [Notes](#notes)
+- [Author](#author)
+
+---
+
+<a id="quick-overview"></a>
+
+## Quick Overview (for teachers)
+
+### Exam deliverables map
+
+| Deliverable | Where it is in this repo |
+|---|---|
+| SRS (PDF) | [docs/SRS/Software Requirements Specification (SRS) v1-0.pdf](docs/SRS/Software%20Requirements%20Specification%20%28SRS%29%20v1-0.pdf), [docs/SRS/Software Requirements Specification (SRS) v2-1.pdf](docs/SRS/Software%20Requirements%20Specification%20%28SRS%29%20v2-1.pdf) |
+| Review report (PDF) | [docs/SRS/review/Multi-Currency Wallet - Summary Review Report.pdf](docs/SRS/review/Multi-Currency%20Wallet%20-%20Summary%20Review%20Report.pdf) |
+| Risk assessment (PDF) | [docs/Risk Assessment.pdf](docs/Risk%20Assessment.pdf) |
+| Black-box test design (PDF) | [docs/Black-Box-Test-Design.pdf](docs/Black-Box-Test-Design.pdf) |
+| Static testing + white-box + coverage (PDF) | [docs/Static-Testing-White-Box-Coverage.pdf](docs/Static-Testing-White-Box-Coverage.pdf) |
+| CI output snapshots (txt) | [docs/ci_output](docs/ci_output) (see also [docs/ci_output/README.md](docs/ci_output/README.md)) |
+| API testing (Postman) | [tests/api_postman](tests/api_postman) (collection + environment JSON + evidence screenshot) |
+| E2E UI tests (Playwright) | [tests/e2e](tests/e2e) (tests + FX stub server + instructions) |
+| Performance (JMeter) | [tests/performance/jmeter](tests/performance/jmeter) (JMX + load/stress/spike evidence) |
+| UI performance evidence (Lighthouse) | [tests/performance/lighthouse](tests/performance/lighthouse) |
+| Usability test design (PDF) | [docs/Usability-testing-design.pdf](docs/Usability-testing-design.pdf) |
+
+### Ports & URLs
+
+| Context | What | URL |
+|---|---|---|
+| Local | UI | `http://127.0.0.1:5000/` |
+| Local | API | `http://127.0.0.1:5000/api/wallets` |
+| Docker | UI | `http://127.0.0.1:8080/` |
+| Docker | API | `http://127.0.0.1:8080/api/wallets` |
+| Both | Health check | `/api/health/` |
+
+### Key API endpoints (quick reference)
+
+- `POST /api/wallets` (create wallet)
+- `GET /api/wallets` (list wallets)
+- `GET /api/wallets/<wallet_id>` (get wallet)
+- `POST /api/wallets/<wallet_id>/deposit`
+- `POST /api/wallets/<wallet_id>/withdraw`
+- `POST /api/wallets/exchange`
+- `GET /api/wallets/<wallet_id>/transactions`
+
+---
+
+<a id="quickstart"></a>
+
+## One-minute Quickstart (local)
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# Run the app (UI + API)
+flask --app app:create_app run --port 5000
+```
+
+See [Testing](#testing) for Postman, E2E (Playwright), and performance (JMeter) instructions.
+
+<a id="domain"></a>
+
 ## Domain Concepts & Project Elements
 
 This project is focused on making a small **multi-currency wallet simulator** for:
@@ -24,28 +100,51 @@ This project is focused on making a small **multi-currency wallet simulator** fo
 - **Seeing history** – view a simple log of what happened to a wallet over time.
 - **Using external API** – fetches live exchange rates to support currency conversions (tests use a local stub by setting `EXCHANGE_API_URL`).
 
----
+<a id="runtime-config"></a>
 
-## Project Structure (folders only)
+## Runtime Configuration
+
+Environment variables supported:
+
+- `DATABASE` (default: `instance/wallet.db`) – SQLite DB path used by the app.
+- `TEST_DATABASE` (default: `instance/test_wallet.db`) – DB path used by the test config.
+- `EXCHANGE_API_URL` (default: `https://api.frankfurter.dev/v1`) – public FX API base URL.
+
+Note: automated tests do not depend on the real FX provider. Integration/E2E/performance flows use a local stub by pointing `EXCHANGE_API_URL` at the stub server.
+
+<a id="project-structure"></a>
+
+## Project Structure
 
 ```text
 .
-├── app/          # Flask application package (config, routes, services, repository, database helpers)
-├── frontend/     # Static HTML/CSS/JS frontend (client-side rendering)
-├── tests/        # Test suite (unit, integration, API, E2E, performance)
-├── seed/         # seeding script
-├── instance/     # Runtime data (SQLite DB files)
-└── docs/         # SRS, test plan/report, diagrams, and other documentation
+├── app/               # Flask app package
+│   ├── routes/        # HTTP API + static frontend routes (Flask blueprints)
+│   ├── services/      # orchestration layer (domain + repos + external FX)
+│   ├── repository/    # SQLite data access
+│   ├── domain/        # pure business logic (models, rules, enums, exceptions)
+│   ├── config.py
+│   └── database.py
+├── frontend/          # Static HTML/CSS/JS frontend (client-side rendering)
+├── tests/             # Test suite
+│   ├── unit/
+│   ├── integration/
+│   ├── api_postman/
+│   ├── e2e/
+│   └── performance/
+├── seed/              # Seeding script(s)
+├── instance/          # Runtime data (SQLite DB files)
+└── docs/              # PDFs + CI output snapshots for exam deliverables
 ```
 
 Top-level special files:
 
 - `.gitignore` – ignore virtualenv, instance DB, test reports, etc.
-- `.env` – local environment 
+- `.env` – optional local environment variables (do not commit secrets)
 - `requirements.txt` – Python dependencies
 - `README.md` – main project documentation (this file)
 
----
+<a id="setup"></a>
 
 ## Setup
 
@@ -60,9 +159,18 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
----
+<a id="testing"></a>
 
 ## Testing
+
+Testing docs by type:
+
+- Unit + integration philosophy: [tests/testing_approach_wallet_simulator.md](tests/testing_approach_wallet_simulator.md)
+- API tests (Postman): [tests/api_postman/README.md](tests/api_postman/README.md)
+- E2E (Playwright): [tests/e2e/README.md](tests/e2e/README.md)
+- Performance (JMeter): [tests/performance/jmeter/README.md](tests/performance/jmeter/README.md)
+
+### Quick commands
 
 Run all tests:
 
@@ -82,8 +190,6 @@ Generate HTML coverage report:
 pytest --cov=app --cov-report=html
 ```
 
----
-
 Run unit tests only (fast):
 
 ```bash
@@ -95,8 +201,6 @@ Run unit tests with coverage:
 ```bash
 pytest tests/unit --cov=app --cov-report=term-missing
 ```
-
----
 
 Run integration tests only (full stack, FX stubbed):
 
@@ -110,15 +214,32 @@ Run integration tests with coverage:
 pytest -m integration --cov=app --cov-report=term-missing
 ```
 
----
+<a id="seeding"></a>
 
 ## Seeding demo data (optional)
 
-Seed demo wallets + transactions once (skips if already seeded): `python seed/seed_db.py`.
-Reset and reseed from scratch: `python seed/seed_db.py --reset` (or clear tables with `--force`).
-Docker (persist DB): run with `-v wallet-sim-data:/app/instance`, then seed once via `docker exec -it Currency-Wallet-Sim python seed/seed_db.py`.
+Local (seed once; script will skip if already seeded):
+
+```bash
+python seed/seed_db.py
+```
+
+Local (reset + reseed from scratch):
+
+```bash
+python seed/seed_db.py --reset --force
+```
+
+Docker (persist DB using a named volume, then seed inside the container):
+
+```bash
+docker run -d --name Currency-Wallet-Sim -p 8080:5000 -v wallet-sim-data:/app/instance wallet-sim:latest
+docker exec -it Currency-Wallet-Sim python seed/seed_db.py
+```
 
 ---
+
+<a id="docker"></a>
 
 ## Docker (Build + Run)
 
@@ -130,10 +251,16 @@ docker build -t wallet-sim:latest .
 
 Note: The Docker build ignores local `instance/*.db` files (via `.dockerignore`) and bakes a fresh seeded demo database into the image.
 
-Run the container with a stable name:
+Run the container with a stable name (foreground):
 
 ```bash
 docker run --name Currency-Wallet-Sim -p 8080:5000 wallet-sim:latest
+```
+
+Run detached (background):
+
+```bash
+docker run -d --name Currency-Wallet-Sim -p 8080:5000 wallet-sim:latest
 ```
 
 Open the UI at:
@@ -144,18 +271,6 @@ Open the API at:
 
 - `http://127.0.0.1:8080/api/wallets`
 
-If you pulled new changes, rebuild the image first:
-
-```bash
-docker build -t wallet-sim:latest .
-```
-
-Run detached (background):
-
-```bash
-docker run -d --name Currency-Wallet-Sim -p 8080:5000 wallet-sim:latest
-```
-
 Stop and remove (when running detached):
 
 ```bash
@@ -165,11 +280,19 @@ docker rm Currency-Wallet-Sim
 
 ---
 
+<a id="notes"></a>
+
+## Notes
+
+- The frontend is served by the Flask backend (no separate frontend server).
+- Automated tests avoid calling the real external FX provider by stubbing `EXCHANGE_API_URL`.
+- CI runs on Python 3.12; Docker uses Python 3.11.
+
+---
+
+<a id="author"></a>
+
 ## 👥 Author
 
 - **Marcus R. Kjærsgaard**  
   [![GitHub](https://img.shields.io/badge/GitHub-marcus--rk-black?logo=github)](https://github.com/marcus-rk)
-
----
-
-... More to come ...

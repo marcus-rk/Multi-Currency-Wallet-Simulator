@@ -1,3 +1,9 @@
+"""Application/service layer for wallet operations.
+
+Orchestrates repositories + pure domain rules to implement deposits, withdrawals,
+exchanges, and wallet lifecycle transitions.
+"""
+
 from datetime import datetime, timezone
 from decimal import Decimal
 import sqlite3

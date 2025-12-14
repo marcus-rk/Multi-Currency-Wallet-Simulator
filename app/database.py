@@ -1,4 +1,8 @@
-# app/database.py
+"""SQLite database helpers.
+
+Owns connection lifecycle (Flask `g`), schema initialization, and teardown.
+"""
+
 import sqlite3
 from typing import Optional
 

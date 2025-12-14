@@ -1,3 +1,8 @@
+"""Wallet resource routes.
+
+Provides endpoints to create/list/get wallets and manage wallet lifecycle state.
+"""
+
 from flask import Blueprint, request, jsonify
 from app.domain.enums import Currency, WalletStatus
 from app.domain.exceptions import WalletNotFoundError, WalletStateError
