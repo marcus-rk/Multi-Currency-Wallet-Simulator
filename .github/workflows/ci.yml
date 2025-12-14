@@ -94,9 +94,19 @@ jobs:
           python -m pip install pytest pytest-cov
 
       # Vertical-slice checks (HTTP -> services -> repos -> SQLite).
-      - name: Run integration tests
+      # Option A (exam deliverable): save the CI console output to a text file
+      # and upload it as an artifact so it can be downloaded and submitted.
+      - name: Run integration tests (capture output)
+        shell: bash
         run: |
-          python -m pytest -m integration
+          set -o pipefail
+          python -m pytest -m integration 2>&1 | tee integration_output.txt
+
+      - name: Upload integration output artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-output
+          path: integration_output.txt
 
   sonarcloud:
     name: SonarCloud
