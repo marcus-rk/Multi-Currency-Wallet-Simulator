@@ -113,7 +113,7 @@ Environment variables supported:
 - `TEST_DATABASE` (default: `instance/test_wallet.db`) – DB path used by the test config.
 - `EXCHANGE_API_URL` (default: `https://api.frankfurter.dev/v1`) – public FX API base URL.
 
-Note: automated tests do not depend on the real FX provider. Integration/E2E/performance flows use a local stub by pointing `EXCHANGE_API_URL` at the stub server.
+Note: E2E (Playwright) and performance (JMeter) runs point EXCHANGE_API_URL to a local stub for deterministic results; production/default uses Frankfurter.
 
 <a id="project-structure"></a>
 
