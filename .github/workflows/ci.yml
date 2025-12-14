@@ -1,12 +1,12 @@
 name: CI
 
-# Pipeline runs in parallel:
-# - Linting (static code quality)
-# - Unit tests (domain/business rules)
-# - Integration tests (HTTP -> services -> repos -> SQLite)
+# CI workflow goals:
+# - Catch style/quality issues early (lint)
+# - Verify business rules quickly (unit tests)
+# - Verify system wiring across layers (integration tests)
+# - Publish code-quality signals to SonarCloud (coverage + analysis)
 #
-# Triggers on push and PR to main, so changes are verified before merge
-# and main stays green after merges.
+# Trigger on push/PR to main so changes are validated before merge.
 on:
   push:
     branches: [ "main" ]
@@ -37,10 +37,22 @@ jobs:
           if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
           python -m pip install pylint
 
-      # Static analysis for code quality.
-      - name: Lint with Pylint
+      # Run static analysis and capture output.
+      # We keep the normal log output, but also save a copy as an artifact so it can
+      # be downloaded for offline review/debugging.
+      - name: Lint with Pylint (capture output)
+        shell: bash
         run: |
-          python -m pylint app --fail-under=8.0
+          set -o pipefail
+          python -m pylint app --fail-under=8.0 2>&1 | tee lint_output.txt
+
+      - name: Upload lint output artifact
+        # Upload even when lint fails so the output is still available.
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-output
+          path: lint_output.txt
 
   unit-tests:
     name: Unit tests
@@ -65,10 +77,21 @@ jobs:
           if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
           python -m pip install pytest pytest-cov
 
-      # Fast feedback on domain/service logic.
-      - name: Run unit tests (with coverage)
+      # Run unit tests for fast feedback on domain/service logic.
+      # Output is captured to a file and uploaded as an artifact for easy download.
+      - name: Run unit tests (with coverage, capture output)
+        shell: bash
         run: |
-          python -m pytest tests/unit --cov=app --cov-report=term-missing
+          set -o pipefail
+          python -m pytest tests/unit --cov=app --cov-report=term-missing 2>&1 | tee unit_output.txt
+
+      - name: Upload unit test output artifact
+        # Upload even when tests fail so the output is still available.
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-output
+          path: unit_output.txt
 
   integration-tests:
     name: Integration tests
@@ -93,9 +116,8 @@ jobs:
           if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
           python -m pip install pytest pytest-cov
 
-      # Vertical-slice checks (HTTP -> services -> repos -> SQLite).
-      # Option A (exam deliverable): save the CI console output to a text file
-      # and upload it as an artifact so it can be downloaded and submitted.
+      # Run vertical-slice checks (HTTP -> services -> repos -> SQLite).
+      # Output is captured to a file and uploaded as an artifact for easy download.
       - name: Run integration tests (capture output)
         shell: bash
         run: |
@@ -103,6 +125,8 @@ jobs:
           python -m pytest -m integration 2>&1 | tee integration_output.txt
 
       - name: Upload integration output artifact
+        # Upload even when tests fail so the output is still available.
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: integration-output
@@ -114,7 +138,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Pull repository contents into the runner (full history helps blame/PR analysis).
+      # Pull repository contents into the runner.
+      # Full history improves SonarCloud PR decoration/blame information.
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -127,18 +152,19 @@ jobs:
           python-version: "3.12"
           cache: 'pip'
 
-      # Install project deps + test runner for generating coverage.xml.
+      # Install deps + tooling needed to generate coverage.xml for SonarCloud.
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
           python -m pip install pytest pytest-cov
 
-      # Generate a Cobertura XML report for SonarCloud to import.
+      # Generate a Cobertura XML report that SonarCloud can import.
       - name: Run unit tests (coverage.xml)
         run: |
           python -m pytest tests/unit --cov=app --cov-report=xml:coverage.xml
 
+      # Sanity check: make sure coverage.xml was created.
       - name: Debug coverage.xml exists
         run: |
           ls -la
