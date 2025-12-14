@@ -1,11 +1,14 @@
-[![Python](https://img.shields.io/badge/Python-3.x-blue.svg)](https://www.python.org/)
-[![Flask](https://img.shields.io/badge/Flask-Backend-green.svg)](https://flask.palletsprojects.com/)
+[![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-3.1-green.svg)](https://flask.palletsprojects.com/)
 [![SQLite](https://img.shields.io/badge/SQLite-Embedded%20DB-lightgrey.svg)](https://www.sqlite.org/index.html)
 [![Pytest](https://img.shields.io/badge/Pytest-Testing-orange.svg)](https://docs.pytest.org/)
 [![Playwright](https://img.shields.io/badge/Playwright-E2E%20Tests-purple.svg)](https://playwright.dev/)
 [![JMeter](https://img.shields.io/badge/JMeter-Performance-red.svg)](https://jmeter.apache.org/)
+[![Docker](https://img.shields.io/badge/Docker-Dockerfile-2496ED?logo=docker&logoColor=white)](#docker)
+[![Postman](https://img.shields.io/badge/Postman-API%20Tests-FF6C37?logo=postman&logoColor=white)](tests/api_postman/README.md)
 [![CI](https://github.com/marcus-rk/Multi-Currency-Wallet-Simulator/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/marcus-rk/Multi-Currency-Wallet-Simulator/actions/workflows/ci.yml)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=marcus-rk_Multi-Currency-Wallet-Simulator&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=marcus-rk_Multi-Currency-Wallet-Simulator)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 # Multi-Currency Wallet Simulator
 
