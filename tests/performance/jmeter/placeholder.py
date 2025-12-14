@@ -1,1 +1,0 @@
-# placeholder file for JMeter performance tests

@@ -1,0 +1,9 @@
+Label,# Samples,Average,Median,90% Line,95% Line,99% Line,Min,Max,Error %,Throughput,Received KB/sec,Sent KB/sec
+POST create wallet (DKK),3008,41,5,75,177,849,2,2161,"0,000%","15,21274","5,44","3,33"
+POST create wallet (USD),2990,40,5,67,147,746,2,3579,"0,000%","15,11842","5,40","3,31"
+POST deposit (DKK),2971,52,8,109,230,937,3,2166,"0,000%","15,01757","10,43","4,27"
+POST exchange (DKK→USD),2952,148,85,238,426,1135,66,2993,"0,000%","14,91753","13,99","5,35"
+GET transactions (DKK),2914,27,6,59,114,355,2,1267,"0,000%","14,74114","12,73","3,38"
+TOTAL,14835,62,9,120,228,861,2,3579,"0,000%","74,69563","47,78","19,55"
+    
+Results indicate EXCHANGE has the highest variability (largest Std. Dev. and high Max), meaning response times are less predictable under spike load. This is not critical in this run (0% errors), but it suggests jitter/tail-latency risk if load is increased further or if the external dependency is introduced.

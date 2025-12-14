@@ -1,0 +1,10 @@
+Label,# Samples,Average,Min,Max,Std. Dev.,Error %,Throughput,Received KB/sec,Sent KB/sec,Avg. Bytes
+POST create wallet (DKK),3008,41,2,2161,"147,87","0,000%","15,21274","5,44","3,33","366,0"
+POST create wallet (USD),2990,40,2,3579,"170,18","0,000%","15,11842","5,40","3,31","366,0"
+POST deposit (DKK),2971,52,3,2166,"166,66","0,000%","15,01757","10,43","4,27","711,0"
+POST exchange (DKK→USD),2952,148,66,2993,"221,93","0,000%","14,91753","13,99","5,35","960,0"
+GET transactions (DKK),2914,27,2,1267,"81,23","0,000%","14,74114","12,73","3,38","884,0"
+TOTAL,14835,62,2,3579,"169,80","0,000%","74,69563","47,78","19,55","655,0"
+
+
+Results indicate EXCHANGE is the slowest step in the spike scenario (highest average and highest tail latency at 90/95/99%), so end-to-end latency under load is primarily driven by the exchange operation rather than create/deposit/transactions. This is not critical here because Error% is 0%, but it identifies the main performance hotspot.
