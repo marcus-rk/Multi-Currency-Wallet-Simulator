@@ -84,3 +84,21 @@ If the backend runs inside Docker, `http://127.0.0.1:8081` (or `localhost`) poin
 
 - Tests create their own wallets and locate them by the wallet id shown in the UI.
 - No API helpers or DB assertions are used; assertions are user-visible (balances, transaction rows, wallet status).
+
+## Watch the browser (headed mode)
+
+If you want to see the browser open and watch the test progress, run Playwright in headed mode.
+
+```bash
+# Visible browser
+pytest -m e2e --headed tests/e2e/test_wallet_ui_e2e.py
+
+# Visible browser + slow down interactions (milliseconds)
+pytest -m e2e --headed --slowmo 500 tests/e2e/test_wallet_ui_e2e.py
+
+# Interactive debugging (Playwright Inspector)
+PWDEBUG=1 pytest -m e2e --headed tests/e2e/test_wallet_ui_e2e.py
+
+# Run just one test by name match
+pytest -m e2e --headed -k deposit tests/e2e/test_wallet_ui_e2e.py
+```
