@@ -1,0 +1,24 @@
+# Dependabot opens update PRs for pinned dependencies. Actions in ci.yml are
+# pinned to commit SHAs, so without these PRs the pins would never move and
+# would silently miss fixes. Each ecosystem is grouped into one weekly PR.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci"
+
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      pip:
+        patterns: ["*"]
+    commit-message:
+      prefix: "build"
