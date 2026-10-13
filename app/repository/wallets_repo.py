@@ -1,10 +1,10 @@
 from typing import Optional, List
 from datetime import datetime
-from decimal import Decimal
 
 from ..database import get_db
 from app.domain.models.Wallet import Wallet
 from app.domain.enums import Currency, WalletStatus
+from .money import to_minor_units, from_minor_units
 
 
 def create_wallet(wallet: Wallet) -> None:
@@ -18,7 +18,7 @@ def create_wallet(wallet: Wallet) -> None:
         (
             wallet.id,
             wallet.currency.value,
-            str(wallet.balance),
+            to_minor_units(wallet.balance, wallet.currency),
             wallet.status.value,
             wallet.created_at.isoformat(),
             wallet.updated_at.isoformat(),
@@ -66,7 +66,7 @@ def update_wallet(wallet: Wallet) -> None:
         """,
         (
             wallet.currency.value,
-            str(wallet.balance),
+            to_minor_units(wallet.balance, wallet.currency),
             wallet.status.value,
             wallet.updated_at.isoformat(),
             wallet.id,
@@ -77,10 +77,11 @@ def update_wallet(wallet: Wallet) -> None:
 
 def _row_to_wallet(row) -> Wallet:
     """Map a DB row to a Wallet domain object."""
+    currency = Currency(row["currency"])
     return Wallet(
         id=row["id"],
-        currency=Currency(row["currency"]),
-        balance=Decimal(row["balance"]),
+        currency=currency,
+        balance=from_minor_units(row["balance"], currency),
         status=WalletStatus(row["status"]),
         created_at=datetime.fromisoformat(row["created_at"]),
         updated_at=datetime.fromisoformat(row["updated_at"]),

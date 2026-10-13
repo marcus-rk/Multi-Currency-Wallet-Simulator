@@ -38,7 +38,7 @@ from app.database import get_db, init_schema
 from app.domain.enums import Currency, WalletStatus
 from app.domain.models.Wallet import Wallet
 from app.domain.rules import apply_deposit, apply_withdraw, apply_exchange, apply_status_change
-from app.repository.wallets_repo import create_wallet as repo_create_wallet, update_wallet
+from app.repository.wallets_repo import create_wallet as repo_create_wallet, get_wallet, update_wallet
 from app.repository.transactions_repo import create_transaction
 
 
@@ -196,22 +196,10 @@ def _seed_dataset() -> tuple[int, int]:
 
 	# --- Helper to reload wallet after updates ---
 	def _get_wallet(wallet_id: str) -> Wallet:
-		db = get_db()
-		cur = db.execute(
-			"SELECT id, currency, balance, status, created_at, updated_at FROM wallets WHERE id = ?",
-			(wallet_id,),
-		)
-		row = cur.fetchone()
-		if not row:
+		wallet = get_wallet(wallet_id)
+		if not wallet:
 			raise RuntimeError(f"Seed error: wallet {wallet_id} not found")
-		return Wallet(
-			id=row["id"],
-			currency=Currency(row["currency"]),
-			balance=Decimal(row["balance"]),
-			status=WalletStatus(row["status"]),
-			created_at=datetime.fromisoformat(row["created_at"]),
-			updated_at=datetime.fromisoformat(row["updated_at"]),
-		)
+		return wallet
 
 	# --- Wallets (8 total) ---
 	add_wallet("dk_main", Currency.DKK)

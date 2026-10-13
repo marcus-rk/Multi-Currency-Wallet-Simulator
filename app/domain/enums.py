@@ -28,3 +28,8 @@ class Currency(Enum):
     DKK = "DKK"
     EUR = "EUR"
     USD = "USD"
+
+    @property
+    def decimal_places(self) -> int:
+        """Digits after the decimal point of this currency's minor unit (ADR-0004)."""
+        return 2
