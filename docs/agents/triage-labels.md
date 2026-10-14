@@ -6,12 +6,12 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 | -------------------------- | -------------------- | ---------------------------------------- |
 | `needs-triage`             | `needs-triage`       | Maintainer needs to evaluate this issue  |
 | `needs-info`               | `needs-info`         | Waiting on reporter for more information |
-| `ready-for-agent`          | `ready-for-agent`    | Fully specified, ready for an AFK agent  |
+| `ready-for-agent`          | `ready-for-agent`    | Specified and suitable for agent work  |
 | `ready-for-human`          | `ready-for-human`    | Requires human implementation            |
 | `wontfix`                  | `wontfix`            | Will not be actioned                     |
 
 When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table.
 
-These labels may not exist yet in this repository. Check with `gh label list` and ask the owner before creating any.
+Check live labels with `gh label list`; ask the owner before creating new vocabulary. Maintain labels alongside Project fields using the lifecycle in [issue-tracker.md](issue-tracker.md).
 
-Edit the right-hand column to match whatever vocabulary you actually use.
+`ready-for-agent` describes specification quality and agent suitability. It does not override blockers, Project Status or owner authorization. It can remain on a specified blocked issue in Backlog. `ready-for-human` identifies work requiring human action; it does not assign or authorize that action.
