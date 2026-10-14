@@ -6,6 +6,19 @@ This file is the single source of instructions for any coding agent working in t
 
 1. Read [README.md](README.md) and the parts of `docs/` that touch the area you are working in.
 2. Understand the existing project before proposing changes: its purpose, structure, tests and the decisions it already made. Start from what the code does now.
+3. Before writing code, read [docs/agents/coding-standards.md](docs/agents/coding-standards.md). Before writing tests, read [ADR-0002](docs/adr/0002-classical-test-style.md) and [tests/testing_approach_wallet_simulator.md](tests/testing_approach_wallet_simulator.md).
+
+## Checks
+
+CI runs these three checks. Run them before saying a change works, and show their output:
+
+```bash
+python -m pylint app --fail-under=8.0
+python -m pytest tests/unit --cov=app --cov-report=term-missing
+python -m pytest -m integration
+```
+
+CI also runs SonarCloud, which cannot run locally.
 
 ## Separate facts, suggestions and decisions
 
