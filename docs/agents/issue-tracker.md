@@ -1,49 +1,49 @@
-# Issue tracker: GitHub
+# Issue tracker and Project lifecycle
 
-Issues and specs live as GitHub issues in `marcus-rk/Multi-Currency-Wallet-Simulator`. Use the `gh` CLI for all operations; run it from the repository root so it infers the repo.
+GitHub Issues in `marcus-rk/Multi-Currency-Wallet-Simulator` hold agreed scope and acceptance criteria. [Wallet — Portfolio](https://github.com/users/marcus-rk/projects/2) tracks delivery. Use `gh` from this repository; pass `-R marcus-rk/Multi-Currency-Wallet-Simulator` elsewhere.
 
-## Ground rules
+## Before starting or changing work
 
-- Only create issues for plan items the owner has agreed. Never turn an agent's own improvement ideas into issues without that agreement (see the Scope section in `AGENTS.md`).
-- This repository is public. Confirm with the owner before creating, labelling, commenting on or closing an issue.
-- Write issues in English.
+1. Read the issue body, comments and newer owner decisions; inspect assignees, linked PRs, native parent/sub-issues and native dependencies. Check the actual blocker outcome: a closed blocker may have been cancelled rather than delivered. Parent/sub-issue links describe scope, not dependency order.
+2. Verify Project membership and current Status, Area, Priority and triage labels. Inspect linked PR scope, draft state and actual closing relationships. Resolve conflicting evidence with the owner before dependent work.
+3. Confirm explicit authorization for this task. Priority orders attention; Ready describes readiness; neither authorizes execution. Existing scope and generic skills do not expand the owner's authorization. Explicit task authorization can cover routine metadata maintenance within that scope; new scope, marking PRs ready and merging retain owner gates.
+4. Record the accountable human and an execution claim before implementation: session identity, branch/worktree and PR when available. Assign `marcus-rk` only for confirmed active responsibility. A shared human assignee cannot distinguish concurrent agents: inspect existing claims and branches, coordinate overlap and keep one active executor per scope. Keep backlog unassigned unless responsibility is confirmed.
 
-## Conventions
+Only create issues for owner-agreed plan items. Verify each new agreed issue is in this Project and set Area, Priority and appropriate triage labels. Write in English. Suggestions remain proposals until agreed; public comments or other writes require authorization, which may already be provided by the current task.
 
-- **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
-- **Read an issue**: `gh issue view <number> --comments`, filtering comments by `jq` and also fetching labels.
-- **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
-- **Comment on an issue**: `gh issue comment <number> --body "..."`
-- **Apply / remove labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`
-- **Close**: `gh issue close <number> --comment "..."`
+## Project fields and status
 
-## Pull requests as a triage surface
+Current Area options: `Overview`, `Money correctness`, `API consistency`, `Runtime and CI`, `Portfolio presentation`. Current Priority options: `High`, `Medium`, `Low`. Inspect live options before editing; ask the owner about new vocabulary rather than inventing values. Maintain fields and labels when agreed scope changes.
 
-**PRs as a request surface: no.** _(Set to `yes` if this repo treats external PRs as feature requests; `/triage` reads this flag.)_
+| Status | Meaning |
+| --- | --- |
+| Backlog | Awaiting specification, dependencies or owner decisions. |
+| Ready | Specified and unblocked; execution still requires owner authorization. |
+| In progress | Authorized active work, including a draft PR or an agreed parent with children underway. |
+| In review | A non-draft PR after the owner explicitly asks to mark it ready. |
+| Done | Accepted and delivered; code normally merged into the default branch and its issue closed. |
 
-When set to `yes`, PRs run through the same labels and states as issues, using the `gh pr` equivalents:
+Status is separate from issue open/closed state and CI results. A draft is In progress even with passing CI. A review PR can still have failing CI. Closing an issue alone does not prove delivery. Record cancellation or replacement explicitly and reconcile its Project state without calling it delivered.
 
-- **Read a PR**: `gh pr view <number> --comments` and `gh pr diff <number>` for the diff.
-- **List external PRs for triage**: `gh pr list --state open --json number,title,body,labels,author,authorAssociation,comments` then keep only `authorAssociation` of `CONTRIBUTOR`, `FIRST_TIME_CONTRIBUTOR`, or `NONE` (drop `OWNER`/`MEMBER`/`COLLABORATOR`).
-- **Comment / label / close**: `gh pr comment`, `gh pr edit --add-label`/`--remove-label`, `gh pr close`.
+Open blockers normally keep work in Backlog. The owner may explicitly agree preparation when dependencies block merge but allow preparation to start; record the exception and its limits. Once authorized preparation starts, use In progress and preserve the blocker/merge gate. Recheck native dependencies rather than relying on stale body text.
 
-GitHub shares one number space across issues and PRs, so a bare `#42` may be either: resolve with `gh pr view 42` and fall back to `gh issue view 42`.
+## PR links, review and completion
 
-## When a skill says "publish to the issue tracker"
+Use `Closes #N` only when that PR fully resolves issue N. Use `Part of #N` or `Related to #N` for parent specifications and partial work. A child PR must not close its parent. Inspect GitHub's actual closing relationships after scope changes and before review or merge; body text alone is insufficient. Review agents check agreed scope, validation and closing links as well as code standards.
 
-Create a GitHub issue in this repository, after the owner confirms.
+Open PRs as drafts; mark ready only when the owner asks. Merge and close/reopen issues only with owner authorization. After acceptance, verify delivery and issue state before setting Done. Reassess dependents and parents after completion or cancellation: confirm the blocker outcome satisfies their needs, then report eligibility without automatically promoting, starting or closing them.
 
-## When a skill says "fetch the relevant ticket"
+After a pause, abandonment, replacement, scope change or reopening, reconcile Status, labels, claims, assignees and links against what remains active and delivered. Release or update stale execution claims so another session can safely take over.
 
-Run `gh issue view <number> --comments`.
+## Commands and skill routing
 
-## Wayfinding operations
+- Read scope/comments: `gh issue view <n> --comments`; inspect PRs with `gh pr view <n> --comments` and `gh pr diff <n>`.
+- Read native relations: `gh api repos/marcus-rk/Multi-Currency-Wallet-Simulator/issues/<n>/parent`, `/sub_issues`, `/dependencies/blocked_by` and `/dependencies/blocking`. If unavailable, record the limit and use explicit body links as a documented fallback.
+- Inspect Project: `gh project field-list 2 --owner marcus-rk` and `gh project item-list 2 --owner marcus-rk`; verify membership and values after mutations.
+- Create an agreed issue with `gh issue create --title "..." --body-file <file>`, then add it with `gh project item-add 2 --owner marcus-rk --url <issue-url>` and set fields.
+- Use `gh issue edit <n>` for authorized labels/assignees and `gh issue comment <n> --body-file <file>` for authorized claims or findings. Use body files to preserve multiline text.
+- Inspect closing links with GraphQL `PullRequest.closingIssuesReferences`; preserve nonclosing references for partial work.
 
-Used by `/wayfinder`. The **map** is a single issue with **child** issues as tickets.
+When a skill says “publish to the issue tracker”, create only an owner-agreed issue. When it says “fetch the relevant ticket”, perform the preflight above. **PRs as a request surface: no.** Resolve a bare `#N` as issue or PR before acting.
 
-- **Map**: a single issue labelled `wayfinder:map`, holding the Notes / Decisions-so-far / Fog body. `gh issue create --label wayfinder:map`.
-- **Child ticket**: an issue linked to the map as a GitHub sub-issue (`gh api` on the sub-issues endpoint). Where sub-issues aren't enabled, add the child to a task list in the map body and put `Part of #<map>` at the top of the child body. Labels: `wayfinder:<type>` (`research`/`prototype`/`grilling`/`task`). Once claimed, the ticket is assigned to the driving dev.
-- **Blocking**: GitHub's **native issue dependencies**, the canonical, UI-visible representation. Add an edge with `gh api --method POST repos/<owner>/<repo>/issues/<child>/dependencies/blocked_by -F issue_id=<blocker-db-id>`, where `<blocker-db-id>` is the blocker's numeric **database id** (`gh api repos/<owner>/<repo>/issues/<n> --jq .id`, _not_ the `#number` or `node_id`). GitHub reports `issue_dependencies_summary.blocked_by` (open blockers only, the live gate). Where dependencies aren't available, fall back to a `Blocked by: #<n>, #<n>` line at the top of the child body. A ticket is unblocked when every blocker is closed.
-- **Frontier query**: list the map's open children (`gh issue list --state open`, scoped to the map's sub-issues / task list), drop any with an open blocker (`issue_dependencies_summary.blocked_by > 0`, or an open issue in the `Blocked by` line) or an assignee; first in map order wins.
-- **Claim**: `gh issue edit <n> --add-assignee @me`, the session's first write.
-- **Resolve**: `gh issue comment <n> --body "<answer>"`, then `gh issue close <n>`, then append a context pointer (gist + link) to the map's Decisions-so-far.
+Wayfinder maps use `wayfinder:map` and native sub-issues; child type labels are `wayfinder:<type>` when agreed. Native dependencies are canonical ordering, with numeric issue database IDs for edge creation. A frontier query finds candidates, not authorization: inspect scope, blockers and execution claims before claiming. A skill's resolve step does not grant permission to close an issue or its parent.

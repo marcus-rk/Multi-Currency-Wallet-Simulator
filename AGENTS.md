@@ -36,7 +36,7 @@ Never present a suggestion as if it were decided.
 
 ### Issue tracker
 
-GitHub Issues in `marcus-rk/Multi-Currency-Wallet-Simulator`, via `gh`. See `docs/agents/issue-tracker.md`.
+Before creating, claiming, implementing, reviewing or changing tracked work, read [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md). It owns the issue and Project lifecycle, execution claims, dependency checks and owner gates. Repository rules and newer owner decisions take precedence over generic skills.
 
 ### Triage labels
 
